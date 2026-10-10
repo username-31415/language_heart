@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multilingual Love Heart ❤️</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0b0b1a;
+            color: #ff4d6d;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(11, 11, 26, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        #overlay h1 {
+            font-size: 2.2rem;
+            color: #ff758f;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(255, 117, 143, 0.6);
+            animation: pulse 1.5s infinite;
+        }
+
+        #overlay p {
+            color: #d1d5db;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.06); opacity: 1; text-shadow: 0 0 25px rgba(255, 77, 109, 0.9); }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+
+        .heart-container {
+            position: relative;
+            width: 360px;
+            height: 360px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .message {
+            position: absolute;
+            font-weight: 600;
+            opacity: 0;
+            white-space: nowrap;
+            text-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
+            animation: fadeInFloat 2.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards, shimmer 3s infinite alternate;
+        }
+
+        @keyframes fadeInFloat {
+            0% { transform: scale(0.3) translateY(20px); opacity: 0; }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes shimmer {
+            0% { text-shadow: 0 0 8px rgba(255, 77, 109, 0.4); }
+            100% { text-shadow: 0 0 18px rgba(255, 150, 170, 0.9); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Tap Overlay for Mobile Browser Audio Permissions -->
+    <div id="overlay" onclick="startExperience()">
+        <h1>Tap to Open ❤️</h1>
+        <p>🔊 Turn sound on</p>
+    </div>
+
+    <!-- Audio Element -->
+    <audio id="bg-song" loop preload="auto">
+        <source src="song.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="heart-container" id="heart"></div>
+
+    <script>
+        // Exact order of languages requested (addressed to a male partner)
+        const loveTranslations = [
+            "I Love You",                // 1. English
+            "میں آپ سے محبت کرتی ہوں",     // 2. Urdu
+            "زه له تا سره مینه لرم",       // 3. Pashto
+            "أنا أحبك",                 // 4. Arabic
+            "میں تہانوں پیار کردی آں",      // 5. Punjabi
+            "Te amo",                    // 6. Spanish
+            "Je t'aime",                 // 7. French
+            "मैं आपसे प्यार करती हूँ",     // 8. Hindi
+            "Eu te amo",                 // 9. Portuguese
+            "Я тебя люблю",              // 10. Russian
+            "Ik hou van je",             // 11. Dutch
+            "Ich liebe dich",            // 12. German
+            "ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ", // 13. Kannada
+            "دوستت دارم",                // 14. Farsi
+            "माझे तुझ्यावर प्रेम आहे",   // 15. Marathi
+            "আমি তোমায় ভালোবাসি",        // 16. Bengali
+            "Seni seviyorum",            // 17. Turkish
+            "我爱你",                    // 18. Chinese
+            "사랑해",                   // 19. Korean
+            "אני אוהבת אותך"             // 20. Hebrew
+        ];
+
+        function startExperience() {
+            document.getElementById('overlay').style.display = 'none';
+            const audio = document.getElementById('bg-song');
+            audio.play().catch(e => console.log("Audio play blocked", e));
+            renderHeart();
+        }
+
+        function renderHeart() {
+            const container = document.getElementById('heart');
+            const total = loveTranslations.length;
+
+            loveTranslations.forEach((text, i) => {
+                const span = document.createElement('span');
+                span.className = 'message';
+                span.innerText = text;
+
+                // Parametric heart formula mapping
+                const t = (i / total) * Math.PI * 2;
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+
+                span.style.left = `calc(50% + ${x * 9}px)`;
+                span.style.top = `calc(50% + ${y * 9}px)`;
+                span.style.fontSize = `${13 + (i % 3) * 2}px`;
+                span.style.animationDelay = `${i * 0.1}s`;
+
+                container.appendChild(span);
+            });
+        }
+    </script>
+</body>
+</html>
