@@ -22,41 +22,6 @@
             overflow: hidden;
         }
 
-        #overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(8, 8, 20, 0.96);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        #overlay h1 {
-            font-size: 2.2rem;
-            color: #ff758f;
-            margin-bottom: 12px;
-            text-shadow: 0 0 15px rgba(255, 117, 143, 0.7);
-            animation: pulseTap 1.5s infinite;
-        }
-
-        #overlay p {
-            color: #d1d5db;
-            font-size: 1.1rem;
-        }
-
-        @keyframes pulseTap {
-            0% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.06); opacity: 1; text-shadow: 0 0 25px rgba(255, 77, 109, 0.9); }
-            100% { transform: scale(1); opacity: 0.9; }
-        }
-
         .heart-container {
             position: relative;
             width: 90vw;
@@ -87,12 +52,7 @@
 </head>
 <body>
 
-    <div id="overlay" onclick="startExperience()">
-        <h1>Tap to Open ❤️</h1>
-        <p>🔊 Turn sound on</p>
-    </div>
-
-    <audio id="bg-song" loop preload="auto">
+    <audio id="bg-song" autoplay loop>
         <source src="songg.mp3" type="audio/mpeg">
     </audio>
 
@@ -123,20 +83,6 @@
         ];
 
         let animationTimeout;
-
-        function startExperience() {
-            const overlay = document.getElementById('overlay');
-            const audio = document.getElementById('bg-song');
-
-            // Hide overlay and start heart animation immediately
-            overlay.style.display = 'none';
-            runHeartSequence();
-
-            // Try playing audio safely in the background
-            audio.play().catch(error => {
-                console.log("Audio autoplay prevented or file missing:", error);
-            });
-        }
 
         function runHeartSequence() {
             const container = document.getElementById('heart');
@@ -190,6 +136,9 @@
 
             showNext();
         }
+
+        // Start immediately on load
+        runHeartSequence();
     </script>
 </body>
 </html>
