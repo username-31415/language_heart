@@ -66,7 +66,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Shifted slightly upwards so the bottom tip is clearly visible */
             transform: translateY(-20px);
         }
 
@@ -129,13 +128,13 @@
             const overlay = document.getElementById('overlay');
             const audio = document.getElementById('bg-song');
 
-            audio.play().then(() => {
-                overlay.style.display = 'none';
-                runHeartSequence();
-            }).catch(error => {
-                console.error("Audio playback error:", error);
-                overlay.style.display = 'none';
-                runHeartSequence();
+            // Hide overlay and start heart animation immediately
+            overlay.style.display = 'none';
+            runHeartSequence();
+
+            // Try playing audio safely in the background
+            audio.play().catch(error => {
+                console.log("Audio autoplay prevented or file missing:", error);
             });
         }
 
@@ -180,10 +179,8 @@
                 if (currentIndex < spanElements.length) {
                     spanElements[currentIndex].classList.add('visible');
                     currentIndex++;
-                    // Slower interval (1.1 seconds per line) to match your 30s song pacing
                     animationTimeout = setTimeout(showNext, 1100); 
                 } else {
-                    // Hold full heart visible for 6 seconds before clearing and restarting loop
                     animationTimeout = setTimeout(() => {
                         spanElements.forEach(span => span.classList.remove('visible'));
                         animationTimeout = setTimeout(runHeartSequence, 1200); 
