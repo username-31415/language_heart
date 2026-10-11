@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multilingual Love Heart ❤️</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #0b0b1a;
+        }
+
+        body {
+            background-color: #080814;
             color: #ff4d6d;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -24,7 +28,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(11, 11, 26, 0.95);
+            background: rgba(8, 8, 20, 0.96);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -37,61 +41,77 @@
         #overlay h1 {
             font-size: 2.2rem;
             color: #ff758f;
-            margin-bottom: 10px;
-            text-shadow: 0 0 15px rgba(255, 117, 143, 0.6);
-            animation: pulse 1.5s infinite;
+            margin-bottom: 12px;
+            text-shadow: 0 0 15px rgba(255, 117, 143, 0.7);
+            animation: pulseTap 1.5s infinite;
         }
 
         #overlay p {
             color: #d1d5db;
             font-size: 1.1rem;
-            letter-spacing: 1px;
         }
 
-        @keyframes pulse {
+        @keyframes pulseTap {
             0% { transform: scale(1); opacity: 0.9; }
             50% { transform: scale(1.06); opacity: 1; text-shadow: 0 0 25px rgba(255, 77, 109, 0.9); }
             100% { transform: scale(1); opacity: 0.9; }
         }
 
+        /* Container with continuous heartbeat pulsing */
         .heart-container {
             position: relative;
-            width: 360px;
-            height: 360px;
+            width: 90vw;
+            max-width: 650px;
+            height: 90vh;
+            max-height: 650px;
             display: flex;
             justify-content: center;
             align-items: center;
+            animation: heartbeat 2.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(0.98); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(0.98); }
         }
 
         .message {
             position: absolute;
             font-weight: 600;
-            opacity: 0;
             white-space: nowrap;
-            text-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
-            animation: fadeInFloat 2.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards, shimmer 3s infinite alternate;
+            text-shadow: 0 0 12px rgba(255, 77, 109, 0.6);
+            animation: floatGlow 4s ease-in-out infinite alternate;
+            transform: translate(-50%, -50%);
         }
 
-        @keyframes fadeInFloat {
-            0% { transform: scale(0.3) translateY(20px); opacity: 0; }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        @keyframes shimmer {
-            0% { text-shadow: 0 0 8px rgba(255, 77, 109, 0.4); }
-            100% { text-shadow: 0 0 18px rgba(255, 150, 170, 0.9); }
+        /* Continuous floating animation loop */
+        @keyframes floatGlow {
+            0% {
+                opacity: 0.3;
+                transform: translate(-50%, -50%) translateY(4px) scale(0.95);
+                text-shadow: 0 0 6px rgba(255, 77, 109, 0.4);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) translateY(-4px) scale(1.05);
+                text-shadow: 0 0 18px rgba(255, 117, 143, 0.9);
+            }
+            100% {
+                opacity: 0.6;
+                transform: translate(-50%, -50%) translateY(2px) scale(1);
+                text-shadow: 0 0 10px rgba(255, 77, 109, 0.6);
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Tap Overlay for Mobile Browser Audio Permissions -->
     <div id="overlay" onclick="startExperience()">
         <h1>Tap to Open ❤️</h1>
         <p>🔊 Turn sound on</p>
     </div>
 
-    <!-- Audio Element -->
     <audio id="bg-song" loop preload="auto">
         <source src="song.mp3" type="audio/mpeg">
     </audio>
@@ -99,7 +119,6 @@
     <div class="heart-container" id="heart"></div>
 
     <script>
-        // Exact order of languages requested (addressed to a male partner)
         const loveTranslations = [
             "I Love You",                // 1. English
             "میں آپ سے محبت کرتی ہوں",     // 2. Urdu
@@ -126,28 +145,49 @@
         function startExperience() {
             document.getElementById('overlay').style.display = 'none';
             const audio = document.getElementById('bg-song');
-            audio.play().catch(e => console.log("Audio play blocked", e));
+            
+            // Play song
+            audio.play().catch(e => {
+                console.log("Audio file 'song.mp3' not found or blocked:", e);
+            });
+            
             renderHeart();
         }
 
         function renderHeart() {
             const container = document.getElementById('heart');
             const total = loveTranslations.length;
+            const containerWidth = container.clientWidth;
+            const radius = Math.min(containerWidth * 0.42, 240);
 
             loveTranslations.forEach((text, i) => {
                 const span = document.createElement('span');
                 span.className = 'message';
                 span.innerText = text;
 
-                // Parametric heart formula mapping
+                // Heart parametric mathematical distribution
                 const t = (i / total) * Math.PI * 2;
                 const x = 16 * Math.pow(Math.sin(t), 3);
                 const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
 
-                span.style.left = `calc(50% + ${x * 9}px)`;
-                span.style.top = `calc(50% + ${y * 9}px)`;
-                span.style.fontSize = `${13 + (i % 3) * 2}px`;
-                span.style.animationDelay = `${i * 0.1}s`;
+                // Scale and center points
+                const posX = (x / 16) * radius;
+                const posY = (y / 16) * radius;
+
+                span.style.left = `calc(50% + ${posX}px)`;
+                span.style.top = `calc(50% + ${posY}px)`;
+
+                // Adjust font size based on text length to prevent overlap
+                if (text.length > 18) {
+                    span.style.fontSize = "11px";
+                } else if (text.length > 10) {
+                    span.style.fontSize = "13px";
+                } else {
+                    span.style.fontSize = "15px";
+                }
+
+                // Staggered continuous animation delays
+                span.style.animationDelay = `${(i * 0.2).toFixed(2)}s`;
 
                 container.appendChild(span);
             });
