@@ -66,8 +66,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Shifted upward so the bottom tip is clearly visible and readable */
-            transform: translateY(-20px);
+            /* Shifted upward so the bottom tip is clearly visible */
+            transform: translateY(-25px);
         }
 
         .message {
@@ -94,7 +94,7 @@
         <p>🔊 Turn sound on</p>
     </div>
 
-    <!-- Audio element correctly pointing to songg.mp3 -->
+    <!-- Audio element pointing to songg.mp3 -->
     <audio id="bg-song" loop preload="auto">
         <source src="songg.mp3" type="audio/mpeg">
     </audio>
@@ -131,11 +131,11 @@
             const overlay = document.getElementById('overlay');
             const audio = document.getElementById('bg-song');
 
-            // Hide overlay and start heart animation immediately
+            // Hide overlay and start heart animation
             overlay.style.display = 'none';
             runHeartSequence();
 
-            // Play background music
+            // Play background music safely
             audio.play().catch(error => {
                 console.log("Audio playback error:", error);
             });
@@ -147,13 +147,15 @@
             
             const total = loveTranslations.length;
             const containerWidth = container.clientWidth || 500;
-            const radius = Math.min(containerWidth * 0.46, 270);
+            // Balanced radius to ensure phrases have enough physical space without crashing into each other
+            const radius = Math.min(containerWidth * 0.42, 240);
 
             const spanElements = loveTranslations.map((text, i) => {
                 const span = document.createElement('span');
                 span.className = 'message';
                 span.innerText = text;
 
+                // Mathematical heart parametric equations with proper distribution
                 const t = (i / total) * Math.PI * 2;
                 const x = 16 * Math.pow(Math.sin(t), 3);
                 const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
@@ -164,12 +166,13 @@
                 span.style.left = `calc(50% + ${posX}px)`;
                 span.style.top = `calc(50% + ${posY}px)`;
 
+                // Balanced font sizing to prevent overflow and overlapping text boxes
                 if (text.length > 18) {
-                    span.style.fontSize = "12px";
+                    span.style.fontSize = "11px";
                 } else if (text.length > 10) {
-                    span.style.fontSize = "14px";
+                    span.style.fontSize = "13px";
                 } else {
-                    span.style.fontSize = "16px";
+                    span.style.fontSize = "15px";
                 }
 
                 container.appendChild(span);
@@ -182,10 +185,10 @@
                 if (currentIndex < spanElements.length) {
                     spanElements[currentIndex].classList.add('visible');
                     currentIndex++;
-                    // Slower delay (1.1 seconds per line) to match your 30s song pacing
+                    // 1.1 seconds pacing per line
                     animationTimeout = setTimeout(showNext, 1100); 
                 } else {
-                    // Hold full heart for 6 seconds, clear, and loop over
+                    // Hold full heart for 6 seconds before clearing and looping
                     animationTimeout = setTimeout(() => {
                         spanElements.forEach(span => span.classList.remove('visible'));
                         animationTimeout = setTimeout(runHeartSequence, 1200); 
