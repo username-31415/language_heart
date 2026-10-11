@@ -57,51 +57,30 @@
             100% { transform: scale(1); opacity: 0.9; }
         }
 
-        /* Container with continuous heartbeat pulsing */
         .heart-container {
             position: relative;
             width: 90vw;
-            max-width: 650px;
+            max-width: 750px;
             height: 90vh;
-            max-height: 650px;
+            max-height: 750px;
             display: flex;
             justify-content: center;
             align-items: center;
-            animation: heartbeat 2.5s ease-in-out infinite alternate;
-        }
-
-        @keyframes heartbeat {
-            0% { transform: scale(0.98); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(0.98); }
         }
 
         .message {
             position: absolute;
             font-weight: 600;
             white-space: nowrap;
-            text-shadow: 0 0 12px rgba(255, 77, 109, 0.6);
-            animation: floatGlow 4s ease-in-out infinite alternate;
-            transform: translate(-50%, -50%);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.3);
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 0 14px rgba(255, 77, 109, 0.7);
         }
 
-        /* Continuous floating animation loop */
-        @keyframes floatGlow {
-            0% {
-                opacity: 0.3;
-                transform: translate(-50%, -50%) translateY(4px) scale(0.95);
-                text-shadow: 0 0 6px rgba(255, 77, 109, 0.4);
-            }
-            50% {
-                opacity: 1;
-                transform: translate(-50%, -50%) translateY(-4px) scale(1.05);
-                text-shadow: 0 0 18px rgba(255, 117, 143, 0.9);
-            }
-            100% {
-                opacity: 0.6;
-                transform: translate(-50%, -50%) translateY(2px) scale(1);
-                text-shadow: 0 0 10px rgba(255, 77, 109, 0.6);
-            }
+        .message.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
         }
     </style>
 </head>
@@ -113,7 +92,7 @@
     </div>
 
     <audio id="bg-song" loop preload="auto">
-        <source src="song.mp3.mp3" type="audio/mpeg">
+        <source src="song.mp3" type="audio/mpeg">
     </audio>
 
     <div class="heart-container" id="heart"></div>
@@ -142,55 +121,78 @@
             "אני אוהבת אותך"             // 20. Hebrew
         ];
 
+        let animationTimeout;
+
         function startExperience() {
-            document.getElementById('overlay').style.display = 'none';
+            const overlay = document.getElementById('overlay');
             const audio = document.getElementById('bg-song');
-            
-            // Play song
-            audio.play().catch(e => {
-                console.log("Audio file 'song.mp3' not found or blocked:", e);
+
+            audio.play().then(() => {
+                overlay.style.display = 'none';
+                runHeartSequence();
+            }).catch(error => {
+                console.error("Audio playback error:", error);
+                overlay.style.display = 'none';
+                runHeartSequence();
             });
-            
-            renderHeart();
         }
 
-        function renderHeart() {
+        function runHeartSequence() {
             const container = document.getElementById('heart');
+            container.innerHTML = ""; // Clear board
+            
             const total = loveTranslations.length;
-            const containerWidth = container.clientWidth;
-            const radius = Math.min(containerWidth * 0.42, 240);
+            const containerWidth = container.clientWidth || 500;
+            const radius = Math.min(containerWidth * 0.48, 290); // Wider radius for spacious heart
 
-            loveTranslations.forEach((text, i) => {
+            // Create all elements hidden initially
+            const spanElements = loveTranslations.map((text, i) => {
                 const span = document.createElement('span');
                 span.className = 'message';
                 span.innerText = text;
 
-                // Heart parametric mathematical distribution
+                // Parametric heart formula with increased spread
                 const t = (i / total) * Math.PI * 2;
                 const x = 16 * Math.pow(Math.sin(t), 3);
                 const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
 
-                // Scale and center points
                 const posX = (x / 16) * radius;
                 const posY = (y / 16) * radius;
 
                 span.style.left = `calc(50% + ${posX}px)`;
                 span.style.top = `calc(50% + ${posY}px)`;
 
-                // Adjust font size based on text length to prevent overlap
+                // Comfortable font scaling
                 if (text.length > 18) {
-                    span.style.fontSize = "11px";
+                    span.style.fontSize = "12px";
                 } else if (text.length > 10) {
-                    span.style.fontSize = "13px";
+                    span.style.fontSize = "14px";
                 } else {
-                    span.style.fontSize = "15px";
+                    span.style.fontSize = "16px";
                 }
 
-                // Staggered continuous animation delays
-                span.style.animationDelay = `${(i * 0.2).toFixed(2)}s`;
-
                 container.appendChild(span);
+                return span;
             });
+
+            let currentIndex = 0;
+
+            // Function to show each language one by one
+            function showNext() {
+                if (currentIndex < spanElements.length) {
+                    spanElements[currentIndex].classList.add('visible');
+                    currentIndex++;
+                    animationTimeout = setTimeout(showNext, 500); // 0.5 seconds delay between each language line
+                } else {
+                    // Once the full heart is formed, wait 4 seconds, clear it, and loop again
+                    animationTimeout = setTimeout(() => {
+                        spanElements.forEach(span => span.classList.remove('visible'));
+                        animationTimeout = setTimeout(runHeartSequence, 1000); // 1 second pause before restarting sequence
+                    }, 4000);
+                }
+            }
+
+            showNext();
         }
     </script>
 </body>
