@@ -22,6 +22,41 @@
             overflow: hidden;
         }
 
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(8, 8, 20, 0.96);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        #overlay h1 {
+            font-size: 2.2rem;
+            color: #ff758f;
+            margin-bottom: 12px;
+            text-shadow: 0 0 15px rgba(255, 117, 143, 0.7);
+            animation: pulseTap 1.5s infinite;
+        }
+
+        #overlay p {
+            color: #d1d5db;
+            font-size: 1.1rem;
+        }
+
+        @keyframes pulseTap {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.06); opacity: 1; text-shadow: 0 0 25px rgba(255, 77, 109, 0.9); }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+
         .heart-container {
             position: relative;
             width: 90vw;
@@ -31,6 +66,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            /* Shifted upward so the bottom tip is clearly visible and readable */
             transform: translateY(-20px);
         }
 
@@ -52,7 +88,14 @@
 </head>
 <body>
 
-    <audio id="bg-song" autoplay loop>
+    <!-- Tap to Open overlay to handle browser audio permissions -->
+    <div id="overlay" onclick="startExperience()">
+        <h1>Tap to Open ❤️</h1>
+        <p>🔊 Turn sound on</p>
+    </div>
+
+    <!-- Audio element correctly pointing to songg.mp3 -->
+    <audio id="bg-song" loop preload="auto">
         <source src="songg.mp3" type="audio/mpeg">
     </audio>
 
@@ -83,6 +126,20 @@
         ];
 
         let animationTimeout;
+
+        function startExperience() {
+            const overlay = document.getElementById('overlay');
+            const audio = document.getElementById('bg-song');
+
+            // Hide overlay and start heart animation immediately
+            overlay.style.display = 'none';
+            runHeartSequence();
+
+            // Play background music
+            audio.play().catch(error => {
+                console.log("Audio playback error:", error);
+            });
+        }
 
         function runHeartSequence() {
             const container = document.getElementById('heart');
@@ -125,8 +182,10 @@
                 if (currentIndex < spanElements.length) {
                     spanElements[currentIndex].classList.add('visible');
                     currentIndex++;
+                    // Slower delay (1.1 seconds per line) to match your 30s song pacing
                     animationTimeout = setTimeout(showNext, 1100); 
                 } else {
+                    // Hold full heart for 6 seconds, clear, and loop over
                     animationTimeout = setTimeout(() => {
                         spanElements.forEach(span => span.classList.remove('visible'));
                         animationTimeout = setTimeout(runHeartSequence, 1200); 
@@ -136,9 +195,6 @@
 
             showNext();
         }
-
-        // Start immediately on load
-        runHeartSequence();
     </script>
 </body>
 </html>
