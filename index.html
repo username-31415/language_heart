@@ -102,8 +102,8 @@ const VIRTUAL_WIDTH = 800;
 const VIRTUAL_HEIGHT = 800;
 
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth || document.documentElement.clientWidth || 800;
+    canvas.height = window.innerHeight || document.documentElement.clientHeight || 800;
 }
 
 window.addEventListener('resize', resizeCanvas);
@@ -252,7 +252,6 @@ let RATE = 0;
 let acc = 0.0;
 let spawning = false;
 let animationStarted = false;
-let loopTimer = null;
 
 function build() {
     let cycle = phraseCycle();
@@ -420,7 +419,7 @@ function step() {
     if (!spawning && active.length === 0) {
         render(); // render final frame
         // Wait 1 second break, then restart loop
-        loopTimer = setTimeout(() => {
+        setTimeout(() => {
             initLoop();
         }, 1000);
         return;
@@ -475,6 +474,9 @@ function render() {
 
     ctx.restore();
 }
+
+// Initial paint so the canvas is never blank before clicking
+render();
 </script>
 </body>
 </html>
