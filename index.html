@@ -1,658 +1,661 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Love Heart</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#060208">
+  <title>My Heart for You ❤️</title>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            background-color: #060208;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
-            touch-action: manipulation;
-        }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #060208;
+    }
 
-        #canvas-container {
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            height: 100dvh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background-color: #060208;
-        }
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #060208;
+    }
 
-        #start-overlay {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #060208;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            cursor: pointer;
-            transition: opacity 0.8s ease;
-        }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
 
-        .heart-btn {
-            background: none;
-            border: none;
-            font-size: 80px;
-            cursor: pointer;
-            animation: pulse 1.5s infinite;
-            filter: drop-shadow(0 0 20px rgba(230, 25, 40, 0.6));
-            outline: none;
-            padding: 20px;
-        }
+    #overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 24px;
+      background: rgba(6, 2, 8, 0.94);
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
 
-        .start-text {
-            color: #ffb3b3;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 15px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(230, 25, 40, 0.4);
-        }
+    #overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); }
-        }
-    </style>
+    .heart-icon {
+      font-size: clamp(52px, 12vw, 90px);
+      line-height: 1;
+      animation: heartbeat 1.3s infinite;
+      filter: drop-shadow(0 0 20px rgba(255, 55, 115, 0.65));
+    }
+
+    #start-button {
+      padding: 14px 30px;
+      border: 1px solid rgba(255, 145, 180, 0.8);
+      border-radius: 50px;
+      background: linear-gradient(135deg, #ff3269, #c21d69);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 0 28px rgba(255, 45, 105, 0.3);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #start-button:active {
+      transform: scale(0.96);
+    }
+
+    .subtitle {
+      max-width: 300px;
+      color: #e8cbd6;
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      15% { transform: scale(1.12); }
+      30% { transform: scale(1); }
+      45% { transform: scale(1.08); }
+      60% { transform: scale(1); }
+    }
+
+    @media (max-width: 480px) {
+      #start-button {
+        padding: 13px 25px;
+        font-size: 15px;
+      }
+
+      .subtitle {
+        font-size: 13px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .heart-icon {
+        animation: none;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <div id="canvas-container">
+    <canvas id="heart-canvas"></canvas>
+  </div>
 
-    <audio id="bg-audio" loop preload="auto">
-        <source src="songg.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
-
-    <div id="canvas-container">
-        <div id="start-overlay" onclick="startAnimation()">
-            <button class="heart-btn" aria-label="Open the heart">❤️</button>
-            <div class="start-text">Click to Open</div>
-        </div>
-
-        <canvas id="heartCanvas"></canvas>
+  <div id="overlay">
+    <div class="heart-icon">❤️</div>
+    <button id="start-button" type="button">Open My Heart ❤️</button>
+    <div class="subtitle">
+      A little message from my heart, in 16 languages.
     </div>
+  </div>
 
-<script>
-const canvas = document.getElementById('heartCanvas');
-const ctx = canvas.getContext('2d');
-const overlay = document.getElementById('start-overlay');
-const audio = document.getElementById('bg-audio');
+  <audio id="bg-audio" loop preload="auto">
+    <source src="songg.mp3" type="audio/mpeg">
+  </audio>
 
-const VIRTUAL_WIDTH = 800;
-const VIRTUAL_HEIGHT = 800;
+  <script>
+    (() => {
+      "use strict";
 
-// Animation timing
-const DURATION = 30; 
-const TICK = 16;
-const ANIM = 42;
-const LIFT = 34;
+      // ==========================================
+      // TIMING
+      // Build: 28 seconds
+      // Hold:  2 seconds
+      // Loop:  30 seconds
+      // ==========================================
 
-// Leave time for the final words to finish appearing
-// before the 30-second deadline.
-const SPAWN_DURATION = DURATION * 1000 - ANIM * TICK - 500;
+      const LOOP_DURATION = 30000;
+      const BUILD_DURATION = 28000;
+      const ANIM = 42;
+      const TICK = 16;
+      const ANIM_MS = ANIM * TICK;
+      const SPAWN_DURATION = BUILD_DURATION - ANIM_MS;
 
-let viewportWidth = window.innerWidth;
-let viewportHeight = window.innerHeight;
-let pixelRatio = 1;
+      // ==========================================
+      // CANVAS AND DESIGN
+      // ==========================================
 
-function resizeCanvas() {
-    const width = window.visualViewport
-        ? window.visualViewport.width
-        : window.innerWidth;
+      const VIRTUAL_WIDTH = 800;
+      const VIRTUAL_HEIGHT = 800;
+      const SC = 21;
+      const OY = 20;
+      const LIFT = 34;
+      const GAP = 7;
+      const SIZES = [9, 10, 11, 12];
+      const FONT = "Arial, Helvetica, sans-serif";
+      const BGC = "#060208";
+      const FLASH = "#fff0f5";
 
-    const height = window.visualViewport
-        ? window.visualViewport.height
-        : window.innerHeight;
+      const canvas = document.getElementById("heart-canvas");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const overlay = document.getElementById("overlay");
+      const startButton = document.getElementById("start-button");
+      const audio = document.getElementById("bg-audio");
 
-    viewportWidth = width;
-    viewportHeight = height;
+      let viewWidth = 0;
+      let viewHeight = 0;
+      let pixelRatio = 1;
+      let viewScale = 1;
+      let offsetX = 0;
+      let offsetY = 0;
 
-    // High-resolution rendering for sharper text on phones.
-    pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
+      let ORDER = [];
+      let main_ids = [];
+      let active = [];
+      let currentIndex = 0;
+      let loopStart = 0;
+      let running = false;
+      let animationFrame = null;
 
-    canvas.width = Math.round(width * pixelRatio);
-    canvas.height = Math.round(height * pixelRatio);
+      // ==========================================
+      // MESSAGES IN THE 16 REQUESTED LANGUAGES
+      // ==========================================
 
-    // Draw in CSS pixels while rendering at device resolution.
-    ctx.setTransform(
-        pixelRatio, 0,
-        0, pixelRatio,
-        0, 0
-    );
-}
+      const PHRASES = [
+        "I LOVE YOU",
+        "میں تم سے محبت کرتا ہوں",
+        "TE AMO",
+        "زه له تا سره مینه لرم",
+        "أحبك",
+        "ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ",
+        "JE T'AIME",
+        "मैं तुमसे प्यार करता हूँ",
+        "EU TE AMO",
+        "Я ТЕБЯ ЛЮБЛЮ",
+        "IK HOU VAN JOU",
+        "ICH LIEBE DICH",
+        "ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ",
+        "دوستت دارم",
+        "माझं तुझ्यावर प्रेम आहे",
+        "আমি তোমাকে ভালোবাসি"
+      ];
 
-window.addEventListener('resize', () => {
-    resizeCanvas();
-    render();
-});
+      const COLORS = [
+        "#ff5c8a",
+        "#ff739e",
+        "#ff8fab",
+        "#ffb3c7",
+        "#f65d91",
+        "#f48fb1",
+        "#ff4d79",
+        "#ff9fbd",
+        "#ff6b6b",
+        "#ff80ab",
+        "#e86aa7",
+        "#ffb6c9"
+      ];
 
-if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => {
-        resizeCanvas();
+      // ==========================================
+      // HELPERS
+      // ==========================================
+
+      const clamp = value => Math.max(0, Math.min(1, value));
+
+      function random(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function pick(array) {
+        return array[Math.floor(Math.random() * array.length)];
+      }
+
+      function hexToRgb(hex) {
+        const value = hex.replace("#", "");
+        return {
+          r: parseInt(value.slice(0, 2), 16),
+          g: parseInt(value.slice(2, 4), 16),
+          b: parseInt(value.slice(4, 6), 16)
+        };
+      }
+
+      function rgbToHex({ r, g, b }) {
+        const toHex = value =>
+          Math.round(Math.max(0, Math.min(255, value)))
+            .toString(16)
+            .padStart(2, "0");
+
+        return "#" + toHex(r) + toHex(g) + toHex(b);
+      }
+
+      function mix(colorA, colorB, amount) {
+        const a = hexToRgb(colorA);
+        const b = hexToRgb(colorB);
+        const t = clamp(amount);
+
+        return {
+          r: a.r + (b.r - a.r) * t,
+          g: a.g + (b.g - a.g) * t,
+          b: a.b + (b.b - a.b) * t
+        };
+      }
+
+      function dim(color, amount) {
+        const rgb = hexToRgb(color);
+
+        return rgbToHex({
+          r: rgb.r * amount,
+          g: rgb.g * amount,
+          b: rgb.b * amount
+        });
+      }
+
+      function hx(rgb) {
+        return rgbToHex(rgb);
+      }
+
+      // ==========================================
+      // HEART SHAPE
+      // ==========================================
+
+      function heart(t) {
+        const x = 16 * Math.pow(Math.sin(t), 3);
+        const y =
+          13 * Math.cos(t) -
+          5 * Math.cos(2 * t) -
+          2 * Math.cos(3 * t) -
+          Math.cos(4 * t);
+
+        return { x, y };
+      }
+
+      function heartBoundary() {
+        const points = [];
+
+        for (let i = 0; i <= 300; i++) {
+          const t = (i / 300) * Math.PI * 2;
+          const p = heart(t);
+
+          points.push({
+            x: 400 + p.x * SC,
+            y: 400 - p.y * SC + OY
+          });
+        }
+
+        return points;
+      }
+
+      const boundary = heartBoundary();
+
+      // Find horizontal intersections with the heart boundary.
+      function horizontalIntersections(y) {
+        const intersections = [];
+
+        for (let i = 0; i < boundary.length - 1; i++) {
+          const a = boundary[i];
+          const b = boundary[i + 1];
+
+          if ((a.y <= y && b.y > y) ||
+              (b.y <= y && a.y > y)) {
+            const t = (y - a.y) / (b.y - a.y);
+            intersections.push(a.x + t * (b.x - a.x));
+          }
+        }
+
+        intersections.sort((a, b) => a - b);
+        return intersections;
+      }
+
+      // ==========================================
+      // BUILD THE WORDS INSIDE THE HEART
+      // ==========================================
+
+      function build() {
+        const particles = [];
+        let phraseIndex = 0;
+
+        const top = 400 - 17 * SC + OY;
+        const bottom = 400 + 15 * SC + OY;
+        const rowGap = 15;
+
+        for (let y = top; y <= bottom; y += rowGap) {
+          const intersections = horizontalIntersections(y);
+
+          for (let i = 0; i + 1 < intersections.length; i += 2) {
+            const left = intersections[i] + 5;
+            const right = intersections[i + 1] - 5;
+            const availableWidth = right - left;
+
+            if (availableWidth < 18) continue;
+
+            let x = left;
+
+            while (x < right) {
+              const phrase = PHRASES[phraseIndex % PHRASES.length];
+              phraseIndex++;
+
+              const size = pick(SIZES);
+
+              ctx.save();
+              ctx.font = `600 ${size}px ${FONT}`;
+              const measuredWidth = ctx.measureText(phrase).width;
+              ctx.restore();
+
+              // Keep long phrases inside the heart.
+              const maxWidth = Math.max(12, right - x);
+
+              let displayPhrase = phrase;
+              let displaySize = size;
+
+              if (measuredWidth > maxWidth) {
+                displaySize = Math.max(7, size * maxWidth / measuredWidth);
+              }
+
+              const actualWidth = Math.min(
+                measuredWidth,
+                maxWidth
+              );
+
+              particles.push({
+                x: x + actualWidth / 2,
+                y: y + random(-1.5, 1.5),
+                text: displayPhrase,
+                size: displaySize,
+                color: pick(COLORS),
+                dx: 0,
+                f: 0,
+                startTime: 0,
+                currentX: x + actualWidth / 2,
+                currentY: y,
+                currentMainFill: BGC,
+                currentShadowFill: BGC,
+                currentHaloFill: BGC
+              });
+
+              x += Math.max(14, actualWidth + GAP);
+            }
+          }
+        }
+
+        // Randomize the reveal order so the heart builds organically.
+        for (let i = particles.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [particles[i], particles[j]] = [particles[j], particles[i]];
+        }
+
+        return particles;
+      }
+
+      // ==========================================
+      // RESPONSIVE CANVAS
+      // ==========================================
+
+      function resizeCanvas() {
+        viewWidth = window.innerWidth;
+        viewHeight = window.innerHeight;
+        pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
+        canvas.width = Math.round(viewWidth * pixelRatio);
+        canvas.height = Math.round(viewHeight * pixelRatio);
+
+        canvas.style.width = viewWidth + "px";
+        canvas.style.height = viewHeight + "px";
+
+        // Keep the entire heart visible on mobile and desktop.
+        const padding = viewWidth < 480 ? 16 : 30;
+
+        viewScale = Math.min(
+          (viewWidth - padding * 2) / VIRTUAL_WIDTH,
+          (viewHeight - padding * 2) / VIRTUAL_HEIGHT
+        );
+
+        offsetX = (viewWidth - VIRTUAL_WIDTH * viewScale) / 2;
+        offsetY = (viewHeight - VIRTUAL_HEIGHT * viewScale) / 2;
+
         render();
-    });
-}
+      }
 
-const SC = 21;
-const OY = 20;
-const GAP = 7;
-const SIZES = [9, 10, 11, 12];
-const FONT = "Arial, sans-serif";
-const BG = "#060208";
-const BGC = [6/255, 2/255, 8/255];
+      // ==========================================
+      // SPAWN AND ANIMATE
+      // ==========================================
 
-// Requested languages only
-const PHRASES = [
-    "I love you",                         // English
-    "میں تم سے محبت کرتا ہوں",             // Urdu
-    "Te amo",                             // Spanish
-    "زه له تا سره مینه لرم",               // Pashto
-    "أحبك",                               // Arabic
-    "ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ",              // Punjabi
-    "Je t'aime",                          // French
-    "मैं तुमसे प्यार करता हूँ",              // Hindi
-    "Eu te amo",                          // Portuguese
-    "Я тебя люблю",                       // Russian
-    "Ik hou van jou",                     // Dutch
-    "Ich liebe dich",                     // German
-    "ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ",           // Kannada
-    "دوستت دارم",                         // Farsi
-    "मी तुझ्यावर प्रेम करतो",                // Marathi
-    "আমি তোমাকে ভালোবাসি"                  // Bengali
-];
+      function spawn(p, scheduledTime) {
+        p.f = 0;
+        p.dx = random(-10, 10);
+        p.startTime = scheduledTime;
 
-const rng = (function() {
-    let seed = 11;
+        main_ids.push(p);
+        active.push(p);
+      }
 
-    return {
-        random() {
-            seed = (seed * 9301 + 49297) % 233280;
-            return seed / 233280;
-        },
+      function animate(p, now) {
+        const elapsed = now - p.startTime;
+        const u = clamp(elapsed / ANIM_MS);
+        const eased = 1 - Math.pow(1 - u, 3);
 
-        uniform(min, max) {
-            return min + this.random() * (max - min);
-        },
+        p.f = u * ANIM;
 
-        choice(arr) {
-            return arr[Math.floor(this.random() * arr.length)];
-        },
+        const color = p.color;
+        const x = p.x;
+        const y = p.y;
 
-        shuffle(arr) {
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(this.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
+        const hover = (1 - eased) * LIFT;
 
-            return arr;
-        }
-    };
-})();
+        p.currentX = x + p.dx * (1 - eased);
+        p.currentY = y - hover;
 
-function heart(a) {
-    const x = 16 * (Math.sin(a) ** 3);
+        const flash =
+          0.75 * Math.sin(Math.PI * clamp((u - 0.55) / 0.45));
 
-    const y =
-        13 * Math.cos(a)
-        - 5 * Math.cos(2 * a)
-        - 2 * Math.cos(3 * a)
-        - Math.cos(4 * a);
-
-    return [x * SC, y * SC + OY];
-}
-
-function hx(c) {
-    const r = Math.floor(Math.max(0, Math.min(1, c[0])) * 255);
-    const g = Math.floor(Math.max(0, Math.min(1, c[1])) * 255);
-    const b = Math.floor(Math.max(0, Math.min(1, c[2])) * 255);
-
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-function mix(a, b, k) {
-    return [
-        a[0] + (b[0] - a[0]) * k,
-        a[1] + (b[1] - a[1]) * k,
-        a[2] + (b[2] - a[2]) * k
-    ];
-}
-
-function dim(c, k) {
-    return [c[0] * k, c[1] * k, c[2] * k];
-}
-
-const POLY = [];
-
-for (let i = 0; i < 720; i++) {
-    POLY.push(heart(2 * Math.PI * i / 720));
-}
-
-const EDGES = [];
-
-for (let i = 0; i < POLY.length; i++) {
-    EDGES.push([POLY[i], POLY[(i + 1) % POLY.length]]);
-}
-
-const YMAX = Math.max(...POLY.map(p => p[1]));
-const YMIN = Math.min(...POLY.map(p => p[1]));
-const CY = (YMAX + YMIN) / 2;
-
-function getLineHeight(size) {
-    return size * 1.3 + 4;
-}
-
-function measureText(text, size) {
-    ctx.font = `bold ${size}px ${FONT}`;
-    return ctx.measureText(text).width;
-}
-
-function spans(y) {
-    const xs = [];
-
-    for (const [p1, p2] of EDGES) {
-        const [x1, y1] = p1;
-        const [x2, y2] = p2;
-
-        if ((y1 <= y && y < y2) || (y2 <= y && y < y1)) {
-            xs.push(x1 + (y - y1) * (x2 - x1) / (y2 - y1));
-        }
-    }
-
-    xs.sort((a, b) => a - b);
-
-    const pairs = [];
-
-    for (let i = 0; i < xs.length; i += 2) {
-        if (i + 1 < xs.length) {
-            pairs.push([xs[i], xs[i + 1]]);
-        }
-    }
-
-    return pairs;
-}
-
-function intersect(A, B) {
-    const out = [];
-
-    for (const a of A) {
-        for (const b of B) {
-            const lo = Math.max(a[0], b[0]);
-            const hi = Math.min(a[1], b[1]);
-
-            if (hi - lo > 14) {
-                out.push([lo, hi]);
-            }
-        }
-    }
-
-    return out;
-}
-
-function* phraseCycle() {
-    while (true) {
-        const order = [...PHRASES];
-        rng.shuffle(order);
-        yield* order;
-    }
-}
-
-function math_dist(x, y) {
-    return Math.hypot(
-        x / (16 * SC),
-        (y - CY) / (14.5 * SC)
-    );
-}
-
-let ORDER = [];
-let main_ids = [];
-let active = [];
-let currentIndex = 0;
-let RATE = 0;
-let acc = 0;
-let spawning = false;
-let animationStarted = false;
-let loopTimer = null;
-let runId = 0;
-
-function build() {
-    const cycle = phraseCycle();
-
-    const row_h = Math.max(
-        ...SIZES.map(z => getLineHeight(z))
-    ) + 4;
-
-    const half = row_h / 2;
-    const placed = [];
-
-    let y = YMAX - half;
-
-    while (y > YMIN + half) {
-        const row = intersect(
-            spans(y + half),
-            spans(y - half)
+        const mainColor = mix(BGC, color, Math.pow(eased, 1.5));
+        const flashedColor = mix(
+          hx(mainColor),
+          FLASH,
+          flash
         );
 
-        for (let [lo, hi] of row) {
-            lo += 4;
-            hi -= 4;
+        p.currentMainFill = hx(flashedColor);
+        p.currentShadowFill = hx(mix(BGC, dim(color, 0.30), eased));
+        p.currentHaloFill = hx(mix(BGC, dim(color, 0.20), eased * eased));
 
-            let cur = lo + rng.uniform(0, 8);
-            const line = [];
-
-            while (true) {
-                let fit = null;
-
-                for (let i = 0; i < 10; i++) {
-                    const text = cycle.next().value;
-                    const size = rng.choice(SIZES);
-                    const w = measureText(text, size);
-
-                    if (cur + w <= hi) {
-                        fit = [text, size, w];
-                        break;
-                    }
-                }
-
-                if (!fit) break;
-
-                const [text, size, w] = fit;
-
-                line.push([cur + w / 2, text, size, w]);
-                cur += w + GAP;
-            }
-
-            if (line.length === 0) continue;
-
-            if (line.length > 1) {
-                const left = hi -
-                    (line[line.length - 1][0] +
-                     line[line.length - 1][3] / 2);
-
-                for (let i = 0; i < line.length; i++) {
-                    line[i][0] += left * i / (line.length - 1);
-                }
-            } else {
-                line[0][0] = (lo + hi) / 2;
-            }
-
-            for (let i = 0; i < line.length; i++) {
-                const [x, text, size] = line[i];
-
-                placed.push({
-                    x,
-                    y,
-                    text,
-                    size,
-                    edge: i === 0 || i === line.length - 1
-                });
-            }
+        if (u >= 1) {
+          p.currentX = x;
+          p.currentY = y;
+          p.currentMainFill = color;
+          p.f = ANIM;
+          return false;
         }
 
-        y -= row_h;
-    }
+        return true;
+      }
 
-    const wine = [0.58, 0.0, 0.09];
-    const crimson = [0.90, 0.05, 0.14];
-    const blood = [0.98, 0.10, 0.16];
+      // ==========================================
+      // DRAW
+      // ==========================================
 
-    for (const p of placed) {
-        const rad = Math.min(1.0, math_dist(p.x, p.y));
+      function render() {
+        if (!ctx || !viewWidth || !viewHeight) return;
 
-        let base = mix(wine, crimson, 0.25 + 0.75 * rad);
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        ctx.fillStyle = BGC;
+        ctx.fillRect(0, 0, viewWidth, viewHeight);
 
-        base = mix(
-            base,
-            blood,
-            rng.uniform(0, 0.35) + (p.edge ? 0.3 : 0)
+        ctx.save();
+
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(viewScale, viewScale);
+
+        // Gentle ambient glow behind the heart.
+        const glow = ctx.createRadialGradient(
+          400, 400, 30,
+          400, 400, 350
         );
 
-        p.color = [
-            Math.min(1, base[0]),
-            Math.min(1, base[1]),
-            Math.min(1, base[2])
-        ];
+        glow.addColorStop(0, "rgba(130, 15, 55, 0.12)");
+        glow.addColorStop(1, "rgba(6, 2, 8, 0)");
 
-        p.rad = rad;
-    }
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
-    const edges = placed.filter(p => p.edge);
-    const inner = placed.filter(p => !p.edge);
+        for (const p of main_ids) {
+          const isComplete = p.f >= ANIM;
+          const px = p.currentX;
+          const py = p.currentY;
 
-    edges.sort((a, b) =>
-        (Math.atan2(a.x, a.y - CY) % (2 * Math.PI)) -
-        (Math.atan2(b.x, b.y - CY) % (2 * Math.PI))
-    );
+          ctx.save();
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.direction = "auto";
+          ctx.font = `600 ${p.size}px ${FONT}`;
 
-    inner.sort((a, b) =>
-        (-b.rad + rng.uniform(0, 0.08)) -
-        (-a.rad + rng.uniform(0, 0.08))
-    );
+          // Soft shadow improves readability.
+          ctx.shadowColor = isComplete
+            ? p.currentHaloFill
+            : "rgba(255, 70, 125, 0.16)";
 
-    return [...edges, ...inner];
-}
+          ctx.shadowBlur = isComplete ? 4 : 2;
+          ctx.fillStyle = p.currentShadowFill;
+          ctx.fillText(p.text, px + 0.5, py + 0.7);
 
-const FLASH = [1.0, 0.78, 0.78];
+          ctx.shadowBlur = isComplete ? 3 : 0;
+          ctx.fillStyle = p.currentMainFill;
+          ctx.fillText(p.text, px, py);
 
-function clamp(v) {
-    return Math.max(0, Math.min(1, v));
-}
+          ctx.restore();
+        }
 
-function spawn(p) {
-    p.f = 0;
-    p.dx = rng.uniform(-10, 10);
+        ctx.restore();
+      }
 
-    main_ids.push(p);
-    active.push(p);
-}
+      // ==========================================
+      // EXACT 30-SECOND LOOP
+      // ==========================================
 
-function animate(p) {
-    p.f += 1;
+      function initLoop(now) {
+        main_ids = [];
+        active = [];
+        ORDER = build();
+        currentIndex = 0;
+        loopStart = now;
+      }
 
-    const u = clamp(p.f / ANIM);
-    const e = 1 - (1 - u) ** 3;
+      function step(now) {
+        if (!running) return;
 
-    const c = p.color;
-    const x = p.x;
-    const y = -p.y;
+        let elapsed = now - loopStart;
 
-    const hover = (1 - e) * LIFT;
+        // Restart precisely at the 30-second boundary.
+        if (elapsed >= LOOP_DURATION) {
+          initLoop(loopStart + LOOP_DURATION);
+          elapsed = now - loopStart;
+        }
 
-    p.currentX = x + p.dx * (1 - e);
-    p.currentY = y - hover;
+        // Spread scheduled arrivals across the build window.
+        const targetCount = Math.min(
+          ORDER.length,
+          Math.floor((elapsed / SPAWN_DURATION) * ORDER.length)
+        );
 
-    const flash = 0.75 *
-        Math.sin(Math.PI * clamp((u - 0.55) / 0.45));
+        while (currentIndex < targetCount) {
+          const scheduledTime =
+            loopStart +
+            (currentIndex / ORDER.length) * SPAWN_DURATION;
 
-    const col = mix(mix(BGC, c, e ** 1.5), FLASH, flash);
+          spawn(ORDER[currentIndex], scheduledTime);
+          currentIndex++;
+        }
 
-    p.currentMainFill = hx(col);
-    p.currentShadowFill = hx(mix(BGC, dim(c, 0.30), e));
-    p.currentHaloFill = hx(mix(BGC, dim(c, 0.20), e * e));
+        // Ensure every phrase has been scheduled before the build deadline.
+        if (elapsed >= SPAWN_DURATION) {
+          while (currentIndex < ORDER.length) {
+            const scheduledTime =
+              loopStart +
+              (currentIndex / ORDER.length) * SPAWN_DURATION;
 
-    if (u >= 1) {
-        p.currentX = x;
-        p.currentY = y;
-        p.currentMainFill = hx(c);
-        return false;
-    }
-
-    return true;
-}
-
-function startAnimation() {
-    if (animationStarted) return;
-
-    animationStarted = true;
-    resizeCanvas();
-
-    audio.currentTime = 0;
-
-    audio.play().catch(err => {
-        console.log("Audio play error:", err);
-    });
-
-    overlay.style.opacity = '0';
-
-    setTimeout(() => {
-        overlay.style.display = 'none';
-    }, 800);
-
-    initLoop();
-}
-
-function initLoop() {
-    if (loopTimer !== null) {
-        clearTimeout(loopTimer);
-        loopTimer = null;
-    }
-
-    runId++;
-
-    main_ids = [];
-    active = [];
-    ORDER = build();
-
-    currentIndex = 0;
-    RATE = ORDER.length / (SPAWN_DURATION / TICK);
-    acc = 0;
-    spawning = true;
-
-    step(runId);
-}
-
-function step(id) {
-    if (id !== runId) return;
-
-    if (spawning) {
-        acc += RATE;
-
-        while (acc >= 1 && currentIndex < ORDER.length) {
-            acc -= 1;
-            spawn(ORDER[currentIndex]);
+            spawn(ORDER[currentIndex], scheduledTime);
             currentIndex++;
+          }
         }
 
-        if (currentIndex >= ORDER.length) {
-            spawning = false;
-        }
-    }
+        active = active.filter(p => animate(p, now));
 
-    active = active.filter(p => animate(p));
+        render();
+        animationFrame = requestAnimationFrame(step);
+      }
 
-    render();
+      // ==========================================
+      // START BUTTON AND MUSIC
+      // ==========================================
 
-    if (!spawning && active.length === 0) {
-        // Wait briefly, then repeat the same animation.
-        loopTimer = setTimeout(() => {
-            if (id === runId) {
-                initLoop();
-            }
-        }, 1000);
+      async function startAnimation() {
+        if (running) return;
 
-        return;
-    }
+        running = true;
+        overlay.classList.add("hidden");
 
-    loopTimer = setTimeout(() => step(id), TICK);
-}
+        // Start the music from the beginning on each fresh start.
+        audio.currentTime = 0;
 
-function render() {
-    // Clear using CSS pixel dimensions; the context itself
-    // is scaled to the screen's device pixel ratio.
-    ctx.fillStyle = BG;
-    ctx.fillRect(0, 0, viewportWidth, viewportHeight);
-
-    ctx.save();
-
-    // Fit the heart to the screen and center it.
-    const scaleX = viewportWidth / VIRTUAL_WIDTH;
-    const scaleY = viewportHeight / VIRTUAL_HEIGHT;
-    const scale = Math.min(scaleX, scaleY);
-
-    ctx.translate(viewportWidth / 2, viewportHeight / 2);
-    ctx.scale(scale, scale);
-
-    // Center the heart's actual vertical bounds.
-    ctx.translate(0, CY);
-
-    for (const p of main_ids) {
-        const x = p.currentX !== undefined
-            ? p.currentX
-            : p.x;
-
-        const y = p.currentY !== undefined
-            ? p.currentY
-            : (-p.y);
-
-        const size = p.size;
-        const text = p.text;
-
-        // Explicit text settings for consistent, sharp rendering.
-        ctx.font = `bold ${size}px ${FONT}`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        if (p.currentShadowFill && p.f < ANIM) {
-            ctx.fillStyle = p.currentShadowFill;
-            ctx.fillText(text, x + 2, y + 3);
-        } else {
-            ctx.fillStyle = BG;
-            ctx.fillText(text, x + 2, y + 3);
+        try {
+          await audio.play();
+        } catch (error) {
+          // Some browsers may block audio; the animation still runs.
+          console.warn("Audio playback could not start:", error);
         }
 
-        if (p.currentHaloFill && p.f < ANIM) {
-            ctx.font = `bold ${size + 1}px ${FONT}`;
-            ctx.fillStyle = p.currentHaloFill;
-            ctx.fillText(text, x, y);
+        const now = performance.now();
+        initLoop(now);
+
+        if (animationFrame !== null) {
+          cancelAnimationFrame(animationFrame);
         }
 
-        ctx.fillStyle = p.currentMainFill || hx(p.color);
+        animationFrame = requestAnimationFrame(step);
+      }
 
-        const drawY = p.f < ANIM
-            ? y - LIFT
-            : y;
+      startButton.addEventListener("click", startAnimation);
 
-        ctx.fillText(text, x, drawY);
-    }
+      window.addEventListener("resize", resizeCanvas);
 
-    ctx.restore();
-}
-
-// Initial canvas setup.
-resizeCanvas();
-render();
-
-</script>
-
+      // Initial setup.
+      resizeCanvas();
+    })();
+  </script>
 </body>
 </html>
