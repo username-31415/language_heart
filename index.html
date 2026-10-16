@@ -415,10 +415,8 @@ function step() {
 
     active = active.filter(p => animate(p));
 
-    // When spawning is done and all fade-in animations are complete
     if (!spawning && active.length === 0) {
-        render(); // render final frame
-        // Wait 1 second break, then restart loop
+        render(); 
         setTimeout(() => {
             initLoop();
         }, 1000);
@@ -437,11 +435,12 @@ function render() {
     
     let scaleX = canvas.width / VIRTUAL_WIDTH;
     let scaleY = canvas.height / VIRTUAL_HEIGHT;
-    let scale = Math.min(scaleX, scaleY);
+    let scale = Math.min(scaleX, scaleY) * 0.9; // Slight padding so it fits comfortably on phones
     
+    // Perfectly center the heart on the canvas
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.scale(scale, scale);
-    ctx.translate(-VIRTUAL_WIDTH / 2, -VIRTUAL_HEIGHT / 2);
+    ctx.translate(-VIRTUAL_WIDTH / 2, -VIRTUAL_HEIGHT / 2 + (CY * 0.2));
 
     for (let p of main_ids) {
         let x = p.currentX !== undefined ? p.currentX : p.x;
@@ -475,7 +474,6 @@ function render() {
     ctx.restore();
 }
 
-// Initial paint so the canvas is never blank before clicking
 render();
 </script>
 </body>
