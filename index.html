@@ -2,204 +2,474 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multilingual Love Heart ❤️</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Heart</title>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-
-        body {
-            background-color: #080814;
-            color: #ff4d6d;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #060208;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
+            font-family: Arial, sans-serif;
+            touch-action: manipulation;
         }
-
-        #overlay {
-            position: fixed;
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            display: block;
+            background-color: #060208;
+        }
+        #start-overlay {
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(8, 8, 20, 0.96);
+            width: 100%;
+            height: 100%;
+            background-color: #060208;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 10;
             cursor: pointer;
-            text-align: center;
+            transition: opacity 0.8s ease;
         }
-
-        #overlay h1 {
-            font-size: 2.2rem;
-            color: #ff758f;
-            margin-bottom: 12px;
-            text-shadow: 0 0 15px rgba(255, 117, 143, 0.7);
-            animation: pulseTap 1.5s infinite;
+        .heart-btn {
+            background: none;
+            border: none;
+            font-size: 80px;
+            cursor: pointer;
+            animation: pulse 1.5s infinite;
+            filter: drop-shadow(0 0 20px rgba(230, 25, 40, 0.6));
+            outline: none;
+            padding: 20px;
         }
-
-        #overlay p {
-            color: #d1d5db;
-            font-size: 1.1rem;
+        .start-text {
+            color: #ffb3b3;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(230, 25, 40, 0.4);
         }
-
-        @keyframes pulseTap {
-            0% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.06); opacity: 1; text-shadow: 0 0 25px rgba(255, 77, 109, 0.9); }
-            100% { transform: scale(1); opacity: 0.9; }
-        }
-
-        .heart-container {
-            position: relative;
-            width: 90vw;
-            max-width: 750px;
-            height: 90vh;
-            max-height: 750px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* Shifted upward so the bottom tip is clearly visible */
-            transform: translateY(-25px);
-        }
-
-        .message {
-            position: absolute;
-            font-weight: 600;
-            white-space: nowrap;
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.3);
-            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-shadow: 0 0 14px rgba(255, 77, 109, 0.7);
-        }
-
-        .message.visible {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
-    <!-- Tap to Open overlay to handle browser audio permissions -->
-    <div id="overlay" onclick="startExperience()">
-        <h1>Tap to Open ❤️</h1>
-        <p>🔊 Turn sound on</p>
+    <div id="canvas-container">
+        <div id="start-overlay" onclick="startAnimation()">
+            <button class="heart-btn">❤️</button>
+            <div class="start-text">Click to Open</div>
+        </div>
+        <canvas id="heartCanvas"></canvas>
     </div>
 
-    <!-- Audio element pointing to songg.mp3 -->
-    <audio id="bg-song" loop preload="auto">
-        <source src="songg.mp3" type="audio/mpeg">
-    </audio>
+<script>
+const canvas = document.getElementById('heartCanvas');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('start-overlay');
 
-    <div class="heart-container" id="heart"></div>
+const VIRTUAL_WIDTH = 800;
+const VIRTUAL_HEIGHT = 800;
 
-    <script>
-        const loveTranslations = [
-            "I Love You",                // 1. English
-            "میں آپ سے محبت کرتی ہوں",     // 2. Urdu
-            "زه له تا سره مینه لرم",       // 3. Pashto
-            "أنا أحبك",                 // 4. Arabic
-            "میں تہانوں پیار کردی آں",      // 5. Punjabi
-            "Te amo",                    // 6. Spanish
-            "Je t'aime",                 // 7. French
-            "मैं आपसे प्यार करती हूँ",     // 8. Hindi
-            "Eu te amo",                 // 9. Portuguese
-            "Я тебя люблю",              // 10. Russian
-            "Ik hou van je",             // 11. Dutch
-            "Ich liebe dich",            // 12. German
-            "ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ", // 13. Kannada
-            "دوستت دارم",                // 14. Farsi
-            "माझे तुझ्यावर प्रेम आहे",   // 15. Marathi
-            "আমি তোমায় ভালোবাসি",        // 16. Bengali
-            "Seni seviyorum",            // 17. Turkish
-            "我爱你",                    // 18. Chinese
-            "사랑해",                   // 19. Korean
-            "אני אוהבת אותך"             // 20. Hebrew
-        ];
+function resizeCanvas() {
+    const container = document.getElementById('canvas-container');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    
+    canvas.width = width;
+    canvas.height = height;
+}
 
-        let animationTimeout;
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-        function startExperience() {
-            const overlay = document.getElementById('overlay');
-            const audio = document.getElementById('bg-song');
+const SC = 21;
+const OY = 20;
+const DURATION = 30; // Set to 30 seconds for the appearance duration
+const TICK = 16;
+const ANIM = 42;
+const LIFT = 34;
+const GAP = 7;
+const SIZES = [9, 10, 11, 12];
+const FONT = "Arial";
+const BG = "#060208";
+const BGC = [6/255, 2/255, 8/255];
 
-            // Hide overlay and start heart animation
-            overlay.style.display = 'none';
-            runHeartSequence();
-
-            // Play background music safely
-            audio.play().catch(error => {
-                console.log("Audio playback error:", error);
-            });
+const rng = (function() {
+    let seed = 11;
+    return {
+        random() {
+            seed = (seed * 9301 + 49297) % 233280;
+            return seed / 233280;
+        },
+        uniform(min, max) {
+            return min + this.random() * (max - min);
+        },
+        choice(arr) {
+            return arr[Math.floor(this.random() * arr.length)];
+        },
+        shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(this.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
         }
+    };
+})();
 
-        function runHeartSequence() {
-            const container = document.getElementById('heart');
-            container.innerHTML = ""; 
-            
-            const total = loveTranslations.length;
-            const containerWidth = container.clientWidth || 500;
-            // Balanced radius to ensure phrases have enough physical space without crashing into each other
-            const radius = Math.min(containerWidth * 0.42, 240);
+const PHRASES = [
+    "I love you", "Seni seviyorum", "Te amo", "Je t'aime",
+    "Ich liebe dich", "Ti amo", "Eu te amo", "Я тебя люблю",
+    "사랑해", "愛してる", "我爱你", "मैं तुमसे प्यार करता हूँ",
+    "Σ' αγαπώ", "Ik hou van jou", "Jag älskar dig", "Kocham cię",
+    "ฉันรักเธอ", "Anh yêu em", "Aku cinta kamu", "Я тебе кохаю",
+];
 
-            const spanElements = loveTranslations.map((text, i) => {
-                const span = document.createElement('span');
-                span.className = 'message';
-                span.innerText = text;
+function heart(a) {
+    let x = 16 * (Math.sin(a) ** 3);
+    let y = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a);
+    return [x * SC, y * SC + OY];
+}
 
-                // Mathematical heart parametric equations with proper distribution
-                const t = (i / total) * Math.PI * 2;
-                const x = 16 * Math.pow(Math.sin(t), 3);
-                const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+function hx(c) {
+    let r = Math.floor(Math.max(0, Math.min(1, c[0])) * 255);
+    let g = Math.floor(Math.max(0, Math.min(1, c[1])) * 255);
+    let b = Math.floor(Math.max(0, Math.min(1, c[2])) * 255);
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
 
-                const posX = (x / 16) * radius;
-                const posY = (y / 16) * radius;
+function mix(a, b, k) {
+    return [
+        a[0] + (b[0] - a[0]) * k,
+        a[1] + (b[1] - a[1]) * k,
+        a[2] + (b[2] - a[2]) * k
+    ];
+}
 
-                span.style.left = `calc(50% + ${posX}px)`;
-                span.style.top = `calc(50% + ${posY}px)`;
+function dim(c, k) {
+    return [c[0] * k, c[1] * k, c[2] * k];
+}
 
-                // Balanced font sizing to prevent overflow and overlapping text boxes
-                if (text.length > 18) {
-                    span.style.fontSize = "11px";
-                } else if (text.length > 10) {
-                    span.style.fontSize = "13px";
-                } else {
-                    span.style.fontSize = "15px";
+const POLY = [];
+for (let i = 0; i < 720; i++) {
+    POLY.push(heart(2 * Math.PI * i / 720));
+}
+const EDGES = [];
+for (let i = 0; i < POLY.length; i++) {
+    EDGES.push([POLY[i], POLY[(i + 1) % POLY.length]]);
+}
+
+const YMAX = Math.max(...POLY.map(p => p[1]));
+const YMIN = Math.min(...POLY.map(p => p[1]));
+const CY = (YMAX + YMIN) / 2;
+
+function getLineHeight(size) {
+    return size * 1.3 + 4;
+}
+
+function measureText(text, size) {
+    ctx.font = `bold ${size}px ${FONT}`;
+    return ctx.measureText(text).width;
+}
+
+function spans(y) {
+    let xs = [];
+    for (let [p1, p2] of EDGES) {
+        let [x1, y1] = p1;
+        let [x2, y2] = p2;
+        if ((y1 <= y && y < y2) || (y2 <= y && y < y1)) {
+            xs.push(x1 + (y - y1) * (x2 - x1) / (y2 - y1));
+        }
+    }
+    xs.sort((a, b) => a - b);
+    let pairs = [];
+    for (let i = 0; i < xs.length; i += 2) {
+        if (i + 1 < xs.length) {
+            pairs.push([xs[i], xs[i+1]]);
+        }
+    }
+    return pairs;
+}
+
+function intersect(A, B) {
+    let out = [];
+    for (let a of A) {
+        for (let b of B) {
+            let lo = Math.max(a[0], b[0]);
+            let hi = Math.min(a[1], b[1]);
+            if (hi - lo > 14) {
+                out.push([lo, hi]);
+            }
+        }
+    }
+    return out;
+}
+
+function* phraseCycle() {
+    while (true) {
+        let order = [...PHRASES];
+        rng.shuffle(order);
+        yield* order;
+    }
+}
+
+function math_dist(x, y) {
+    return Math.hypot(x / (16 * SC), (y - CY) / (14.5 * SC));
+}
+
+let ORDER = [];
+let main_ids = [];
+let active = [];
+let items = null;
+let RATE = 0;
+let acc = 0.0;
+let spawning = false;
+let animationStarted = false;
+let animationCompleted = false;
+
+function build() {
+    let cycle = phraseCycle();
+    let row_h = Math.max(...SIZES.map(z => getLineHeight(z))) + 4;
+    let half = row_h / 2;
+    let placed = [];
+
+    let y = YMAX - half;
+    while (y > YMIN + half) {
+        let row = intersect(spans(y + half), spans(y - half));
+
+        for (let [lo, hi] of row) {
+            lo += 4;
+            hi -= 4;
+            let cur = lo + rng.uniform(0, 8);
+            let line = [];
+
+            while (true) {
+                let fit = null;
+                for (let i = 0; i < 10; i++) {
+                    let text = cycle.next().value;
+                    let size = rng.choice(SIZES);
+                    let w = measureText(text, size);
+                    if (cur + w <= hi) {
+                        fit = [text, size, w];
+                        break;
+                    }
                 }
-
-                container.appendChild(span);
-                return span;
-            });
-
-            let currentIndex = 0;
-
-            function showNext() {
-                if (currentIndex < spanElements.length) {
-                    spanElements[currentIndex].classList.add('visible');
-                    currentIndex++;
-                    // 1.1 seconds pacing per line
-                    animationTimeout = setTimeout(showNext, 1100); 
-                } else {
-                    // Hold full heart for 6 seconds before clearing and looping
-                    animationTimeout = setTimeout(() => {
-                        spanElements.forEach(span => span.classList.remove('visible'));
-                        animationTimeout = setTimeout(runHeartSequence, 1200); 
-                    }, 6000);
-                }
+                if (!fit) break;
+                let [text, size, w] = fit;
+                line.push([cur + w / 2, text, size, w]);
+                cur += w + GAP;
             }
 
-            showNext();
+            if (line.length === 0) continue;
+
+            if (line.length > 1) {
+                let left = hi - (line[line.length-1][0] + line[line.length-1][3] / 2);
+                for (let i = 0; i < line.length; i++) {
+                    line[i][0] += left * i / (line.length - 1);
+                }
+            } else {
+                line[0][0] = (lo + hi) / 2;
+            }
+
+            for (let i = 0; i < line.length; i++) {
+                let [x, text, size, w] = line[i];
+                let edge = i === 0 || i === line.length - 1;
+                placed.push({x: x, y: y, text: text, size: size, edge: edge});
+            }
         }
-    </script>
+        y -= row_h;
+    }
+
+    let wine = [0.58, 0.0, 0.09];
+    let crimson = [0.90, 0.05, 0.14];
+    let blood = [0.98, 0.10, 0.16];
+    
+    for (let p of placed) {
+        let rad = Math.min(1.0, math_dist(p.x, p.y));
+        let base = mix(wine, crimson, 0.25 + 0.75 * rad);
+        base = mix(base, blood, rng.uniform(0, 0.35) + (p.edge ? 0.3 : 0));
+        p.color = [Math.min(1, base[0]), Math.min(1, base[1]), Math.min(1, base[2])];
+        p.rad = rad;
+    }
+
+    let edges = placed.filter(p => p.edge);
+    let inner = placed.filter(p => !p.edge);
+    edges.sort((a, b) => (Math.atan2(a.x, a.y - CY) % (2 * Math.PI)) - (Math.atan2(b.x, b.y - CY) % (2 * Math.PI)));
+    inner.sort((a, b) => (-b.rad + rng.uniform(0, 0.08)) - (-a.rad + rng.uniform(0, 0.08)));
+    
+    return [...edges, ...inner];
+}
+
+const FLASH = [1.0, 0.78, 0.78];
+
+function clamp(v) {
+    return Math.max(0.0, Math.min(1.0, v));
+}
+
+function spawn(p) {
+    p.f = 0;
+    p.dx = rng.uniform(-10, 10);
+    main_ids.push(p);
+    active.push(p);
+}
+
+function animate(p) {
+    p.f += 1;
+    let u = clamp(p.f / ANIM);
+    let e = 1 - (1 - u) ** 3;
+    let c = p.color;
+    let x = p.x;
+    let y = -p.y;
+    let hover = (1 - e) * LIFT;
+    let px = x + p.dx * (1 - e);
+    let py = y - hover;
+
+    p.currentX = px;
+    p.currentY = py;
+    p.currentFill = hx(c);
+
+    let flash = 0.75 * Math.sin(Math.PI * clamp((u - 0.55) / 0.45));
+    let col = mix(mix(BGC, c, e ** 1.5), FLASH, flash);
+    p.currentMainFill = hx(col);
+    p.currentShadowFill = hx(mix(BGC, dim(c, 0.30), e));
+    p.currentHaloFill = hx(mix(BGC, dim(c, 0.20), e * e));
+
+    if (u >= 1) {
+        p.currentX = x;
+        p.currentY = y;
+        p.currentFill = hx(c);
+        p.currentMainFill = hx(c);
+        return false;
+    }
+    return true;
+}
+
+function startAnimation() {
+    if (animationStarted) return;
+    animationStarted = true;
+
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 800);
+
+    initLoop();
+}
+
+function initLoop() {
+    main_ids = [];
+    active = [];
+    ORDER = build();
+    items = ORDER[Symbol.iterator]();
+    RATE = ORDER.length / (DURATION * 1000 / TICK);
+    acc = 0.0;
+    spawning = true;
+    animationCompleted = false;
+
+    setTimeout(step, 200);
+}
+
+function step() {
+    if (spawning) {
+        acc += RATE;
+        try {
+            while (acc >= 1) {
+                acc -= 1;
+                let nextItem = items.next();
+                if (nextItem.done) {
+                    spawning = false;
+                    break;
+                }
+                spawn(nextItem.value);
+            }
+        } catch (e) {
+            spawning = false;
+        }
+    }
+
+    active = active.filter(p => animate(p));
+
+    if (!spawning && active.length === 0 && !animationCompleted) {
+        animationCompleted = true;
+        // Wait 3 seconds after fully completing, then restart loop automatically
+        setTimeout(() => {
+            initLoop();
+        }, 3000);
+        return; 
+    }
+
+    render();
+    setTimeout(step, TICK);
+}
+
+function render() {
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    
+    let scaleX = canvas.width / VIRTUAL_WIDTH;
+    let scaleY = canvas.height / VIRTUAL_HEIGHT;
+    let scale = Math.min(scaleX, scaleY);
+    
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(scale, scale);
+    ctx.translate(-VIRTUAL_WIDTH / 2, -VIRTUAL_HEIGHT / 2);
+
+    for (let p of main_ids) {
+        let x = p.currentX !== undefined ? p.currentX : p.x;
+        let y = p.currentY !== undefined ? p.currentY : (-p.y);
+        let size = p.size;
+        let text = p.text;
+
+        ctx.font = `bold ${size}px ${FONT}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        if (p.currentShadowFill && p.f < ANIM) {
+            ctx.fillStyle = p.currentShadowFill;
+            ctx.fillText(text, x + 2, y + 3);
+        } else {
+            ctx.fillStyle = BG;
+            ctx.fillText(text, x + 2, y + 3);
+        }
+
+        if (p.currentHaloFill && p.f < ANIM) {
+            ctx.font = `bold ${size + 1}px ${FONT}`;
+            ctx.fillStyle = p.currentHaloFill;
+            ctx.fillText(text, x, y);
+            ctx.font = `bold ${size}px ${FONT}`;
+        }
+
+        ctx.fillStyle = p.currentMainFill || hx(p.color);
+        let drawY = (p.f < ANIM) ? y - LIFT : y;
+        ctx.fillText(text, x, drawY);
+    }
+
+    ctx.restore();
+}
+</script>
 </body>
 </html>
-
-
