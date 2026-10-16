@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Love Heart</title>
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        body, html {
+
+        html, body {
             width: 100%;
             height: 100%;
             background-color: #060208;
@@ -21,24 +23,29 @@
             font-family: Arial, sans-serif;
             touch-action: manipulation;
         }
+
         #canvas-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
         }
+
         canvas {
             display: block;
-            background-color: #060208;
             width: 100%;
             height: 100%;
+            background-color: #060208;
         }
+
         #start-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
             background-color: #060208;
@@ -50,6 +57,7 @@
             cursor: pointer;
             transition: opacity 0.8s ease;
         }
+
         .heart-btn {
             background: none;
             border: none;
@@ -60,6 +68,7 @@
             outline: none;
             padding: 20px;
         }
+
         .start-text {
             color: #ffb3b3;
             font-size: 18px;
@@ -69,6 +78,7 @@
             text-transform: uppercase;
             text-shadow: 0 0 10px rgba(230, 25, 40, 0.4);
         }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.15); }
@@ -76,9 +86,10 @@
         }
     </style>
 </head>
+
 <body>
 
-    <!-- 🎵 Audio Element playing songg.mp3 -->
+    <!-- Background music -->
     <audio id="bg-audio" loop preload="auto">
         <source src="songg.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
@@ -86,9 +97,10 @@
 
     <div id="canvas-container">
         <div id="start-overlay" onclick="startAnimation()">
-            <button class="heart-btn">❤️</button>
+            <button class="heart-btn" aria-label="Open the heart">❤️</button>
             <div class="start-text">Click to Open</div>
         </div>
+
         <canvas id="heartCanvas"></canvas>
     </div>
 
@@ -102,16 +114,30 @@ const VIRTUAL_WIDTH = 800;
 const VIRTUAL_HEIGHT = 800;
 
 function resizeCanvas() {
-    canvas.width = window.innerWidth || document.documentElement.clientWidth || 800;
-    canvas.height = window.innerHeight || document.documentElement.clientHeight || 800;
+    const width = window.visualViewport
+        ? window.visualViewport.width
+        : window.innerWidth;
+
+    const height = window.visualViewport
+        ? window.visualViewport.height
+        : window.innerHeight;
+
+    canvas.width = Math.max(1, Math.round(width));
+    canvas.height = Math.max(1, Math.round(height));
+
+    // Redraw immediately after resizing.
+    render();
 }
 
 window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', resizeCanvas);
+}
 
 const SC = 21;
 const OY = 20;
-const DURATION = 30; // 30 seconds appearance duration
+const DURATION = 30;
 const TICK = 16;
 const ANIM = 42;
 const LIFT = 34;
@@ -123,22 +149,27 @@ const BGC = [6/255, 2/255, 8/255];
 
 const rng = (function() {
     let seed = 11;
+
     return {
         random() {
             seed = (seed * 9301 + 49297) % 233280;
             return seed / 233280;
         },
+
         uniform(min, max) {
             return min + this.random() * (max - min);
         },
+
         choice(arr) {
             return arr[Math.floor(this.random() * arr.length)];
         },
+
         shuffle(arr) {
             for (let i = arr.length - 1; i > 0; i--) {
                 const j = Math.floor(this.random() * (i + 1));
                 [arr[i], arr[j]] = [arr[j], arr[i]];
             }
+
             return arr;
         }
     };
@@ -154,7 +185,13 @@ const PHRASES = [
 
 function heart(a) {
     let x = 16 * (Math.sin(a) ** 3);
-    let y = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a);
+
+    let y =
+        13 * Math.cos(a)
+        - 5 * Math.cos(2 * a)
+        - 2 * Math.cos(3 * a)
+        - Math.cos(4 * a);
+
     return [x * SC, y * SC + OY];
 }
 
@@ -162,6 +199,7 @@ function hx(c) {
     let r = Math.floor(Math.max(0, Math.min(1, c[0])) * 255);
     let g = Math.floor(Math.max(0, Math.min(1, c[1])) * 255);
     let b = Math.floor(Math.max(0, Math.min(1, c[2])) * 255);
+
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
@@ -178,10 +216,13 @@ function dim(c, k) {
 }
 
 const POLY = [];
+
 for (let i = 0; i < 720; i++) {
     POLY.push(heart(2 * Math.PI * i / 720));
 }
+
 const EDGES = [];
+
 for (let i = 0; i < POLY.length; i++) {
     EDGES.push([POLY[i], POLY[(i + 1) % POLY.length]]);
 }
@@ -201,34 +242,43 @@ function measureText(text, size) {
 
 function spans(y) {
     let xs = [];
+
     for (let [p1, p2] of EDGES) {
         let [x1, y1] = p1;
         let [x2, y2] = p2;
+
         if ((y1 <= y && y < y2) || (y2 <= y && y < y1)) {
             xs.push(x1 + (y - y1) * (x2 - x1) / (y2 - y1));
         }
     }
+
     xs.sort((a, b) => a - b);
+
     let pairs = [];
+
     for (let i = 0; i < xs.length; i += 2) {
         if (i + 1 < xs.length) {
-            pairs.push([xs[i], xs[i+1]]);
+            pairs.push([xs[i], xs[i + 1]]);
         }
     }
+
     return pairs;
 }
 
 function intersect(A, B) {
     let out = [];
+
     for (let a of A) {
         for (let b of B) {
             let lo = Math.max(a[0], b[0]);
             let hi = Math.min(a[1], b[1]);
+
             if (hi - lo > 14) {
                 out.push([lo, hi]);
             }
         }
     }
+
     return out;
 }
 
@@ -241,7 +291,10 @@ function* phraseCycle() {
 }
 
 function math_dist(x, y) {
-    return Math.hypot(x / (16 * SC), (y - CY) / (14.5 * SC));
+    return Math.hypot(
+        x / (16 * SC),
+        (y - CY) / (14.5 * SC)
+    );
 }
 
 let ORDER = [];
@@ -255,33 +308,47 @@ let animationStarted = false;
 
 function build() {
     let cycle = phraseCycle();
-    let row_h = Math.max(...SIZES.map(z => getLineHeight(z))) + 4;
+
+    let row_h = Math.max(
+        ...SIZES.map(z => getLineHeight(z))
+    ) + 4;
+
     let half = row_h / 2;
     let placed = [];
 
     let y = YMAX - half;
+
     while (y > YMIN + half) {
-        let row = intersect(spans(y + half), spans(y - half));
+        let row = intersect(
+            spans(y + half),
+            spans(y - half)
+        );
 
         for (let [lo, hi] of row) {
             lo += 4;
             hi -= 4;
+
             let cur = lo + rng.uniform(0, 8);
             let line = [];
 
             while (true) {
                 let fit = null;
+
                 for (let i = 0; i < 10; i++) {
                     let text = cycle.next().value;
                     let size = rng.choice(SIZES);
                     let w = measureText(text, size);
+
                     if (cur + w <= hi) {
                         fit = [text, size, w];
                         break;
                     }
                 }
+
                 if (!fit) break;
+
                 let [text, size, w] = fit;
+
                 line.push([cur + w / 2, text, size, w]);
                 cur += w + GAP;
             }
@@ -289,7 +356,10 @@ function build() {
             if (line.length === 0) continue;
 
             if (line.length > 1) {
-                let left = hi - (line[line.length-1][0] + line[line.length-1][3] / 2);
+                let left = hi -
+                    (line[line.length - 1][0] +
+                     line[line.length - 1][3] / 2);
+
                 for (let i = 0; i < line.length; i++) {
                     line[i][0] += left * i / (line.length - 1);
                 }
@@ -299,30 +369,60 @@ function build() {
 
             for (let i = 0; i < line.length; i++) {
                 let [x, text, size, w] = line[i];
-                let edge = i === 0 || i === line.length - 1;
-                placed.push({x: x, y: y, text: text, size: size, edge: edge});
+
+                let edge =
+                    i === 0 || i === line.length - 1;
+
+                placed.push({
+                    x: x,
+                    y: y,
+                    text: text,
+                    size: size,
+                    edge: edge
+                });
             }
         }
+
         y -= row_h;
     }
 
     let wine = [0.58, 0.0, 0.09];
     let crimson = [0.90, 0.05, 0.14];
     let blood = [0.98, 0.10, 0.16];
-    
+
     for (let p of placed) {
         let rad = Math.min(1.0, math_dist(p.x, p.y));
+
         let base = mix(wine, crimson, 0.25 + 0.75 * rad);
-        base = mix(base, blood, rng.uniform(0, 0.35) + (p.edge ? 0.3 : 0));
-        p.color = [Math.min(1, base[0]), Math.min(1, base[1]), Math.min(1, base[2])];
+
+        base = mix(
+            base,
+            blood,
+            rng.uniform(0, 0.35) + (p.edge ? 0.3 : 0)
+        );
+
+        p.color = [
+            Math.min(1, base[0]),
+            Math.min(1, base[1]),
+            Math.min(1, base[2])
+        ];
+
         p.rad = rad;
     }
 
     let edges = placed.filter(p => p.edge);
     let inner = placed.filter(p => !p.edge);
-    edges.sort((a, b) => (Math.atan2(a.x, a.y - CY) % (2 * Math.PI)) - (Math.atan2(b.x, b.y - CY) % (2 * Math.PI)));
-    inner.sort((a, b) => (-b.rad + rng.uniform(0, 0.08)) - (-a.rad + rng.uniform(0, 0.08)));
-    
+
+    edges.sort((a, b) =>
+        (Math.atan2(a.x, a.y - CY) % (2 * Math.PI)) -
+        (Math.atan2(b.x, b.y - CY) % (2 * Math.PI))
+    );
+
+    inner.sort((a, b) =>
+        (-b.rad + rng.uniform(0, 0.08)) -
+        (-a.rad + rng.uniform(0, 0.08))
+    );
+
     return [...edges, ...inner];
 }
 
@@ -335,29 +435,43 @@ function clamp(v) {
 function spawn(p) {
     p.f = 0;
     p.dx = rng.uniform(-10, 10);
+
     main_ids.push(p);
     active.push(p);
 }
 
 function animate(p) {
     p.f += 1;
+
     let u = clamp(p.f / ANIM);
     let e = 1 - (1 - u) ** 3;
+
     let c = p.color;
     let x = p.x;
     let y = -p.y;
+
     let hover = (1 - e) * LIFT;
+
     let px = x + p.dx * (1 - e);
     let py = y - hover;
 
     p.currentX = px;
     p.currentY = py;
 
-    let flash = 0.75 * Math.sin(Math.PI * clamp((u - 0.55) / 0.45));
+    let flash = 0.75 *
+        Math.sin(Math.PI * clamp((u - 0.55) / 0.45));
+
     let col = mix(mix(BGC, c, e ** 1.5), FLASH, flash);
+
     p.currentMainFill = hx(col);
-    p.currentShadowFill = hx(mix(BGC, dim(c, 0.30), e));
-    p.currentHaloFill = hx(mix(BGC, dim(c, 0.20), e * e));
+
+    p.currentShadowFill = hx(
+        mix(BGC, dim(c, 0.30), e)
+    );
+
+    p.currentHaloFill = hx(
+        mix(BGC, dim(c, 0.20), e * e)
+    );
 
     if (u >= 1) {
         p.currentX = x;
@@ -365,22 +479,26 @@ function animate(p) {
         p.currentMainFill = hx(c);
         return false;
     }
+
     return true;
 }
 
 function startAnimation() {
     if (animationStarted) return;
+
     animationStarted = true;
 
     resizeCanvas();
 
     // Play songg.mp3
     audio.currentTime = 0;
+
     audio.play().catch(err => {
         console.log("Audio play error:", err);
     });
 
     overlay.style.opacity = '0';
+
     setTimeout(() => {
         overlay.style.display = 'none';
     }, 800);
@@ -391,9 +509,13 @@ function startAnimation() {
 function initLoop() {
     main_ids = [];
     active = [];
+
     ORDER = build();
+
     currentIndex = 0;
+
     RATE = ORDER.length / (DURATION * 1000 / TICK);
+
     acc = 0.0;
     spawning = true;
 
@@ -403,11 +525,14 @@ function initLoop() {
 function step() {
     if (spawning) {
         acc += RATE;
+
         while (acc >= 1 && currentIndex < ORDER.length) {
             acc -= 1;
+
             spawn(ORDER[currentIndex]);
             currentIndex++;
         }
+
         if (currentIndex >= ORDER.length) {
             spawning = false;
         }
@@ -416,14 +541,17 @@ function step() {
     active = active.filter(p => animate(p));
 
     if (!spawning && active.length === 0) {
-        render(); 
+        render();
+
         setTimeout(() => {
             initLoop();
         }, 1000);
+
         return;
     }
 
     render();
+
     setTimeout(step, TICK);
 }
 
@@ -432,19 +560,31 @@ function render() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
-    
-    let scaleX = canvas.width / VIRTUAL_WIDTH;
-    let scaleY = canvas.height / VIRTUAL_HEIGHT;
-    let scale = Math.min(scaleX, scaleY) * 0.9; // Slight padding so it fits comfortably on phones
-    
-    // Perfectly center the heart on the canvas
+
+    // Calculate a scale that fits the screen.
+    const scaleX = canvas.width / VIRTUAL_WIDTH;
+    const scaleY = canvas.height / VIRTUAL_HEIGHT;
+    const scale = Math.min(scaleX, scaleY);
+
+    // Center the drawing in the visible viewport.
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.scale(scale, scale);
-    ctx.translate(-VIRTUAL_WIDTH / 2, -VIRTUAL_HEIGHT / 2 + (CY * 0.2));
+
+    // Correct the heart's actual vertical center.
+    // The original heart is not vertically centered
+    // around the drawing origin after its Y coordinates
+    // are flipped in animate().
+    ctx.translate(0, CY);
 
     for (let p of main_ids) {
-        let x = p.currentX !== undefined ? p.currentX : p.x;
-        let y = p.currentY !== undefined ? p.currentY : (-p.y);
+        let x = p.currentX !== undefined
+            ? p.currentX
+            : p.x;
+
+        let y = p.currentY !== undefined
+            ? p.currentY
+            : (-p.y);
+
         let size = p.size;
         let text = p.text;
 
@@ -467,14 +607,21 @@ function render() {
         }
 
         ctx.fillStyle = p.currentMainFill || hx(p.color);
-        let drawY = (p.f < ANIM) ? y - LIFT : y;
+
+        let drawY = (p.f < ANIM)
+            ? y - LIFT
+            : y;
+
         ctx.fillText(text, x, drawY);
     }
 
     ctx.restore();
 }
 
+// Initial setup.
+resizeCanvas();
 render();
 </script>
+
 </body>
 </html>
