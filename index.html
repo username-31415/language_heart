@@ -23,8 +23,8 @@
         }
         #canvas-container {
             position: relative;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -32,6 +32,8 @@
         canvas {
             display: block;
             background-color: #060208;
+            width: 100%;
+            height: 100%;
         }
         #start-overlay {
             position: absolute;
@@ -76,6 +78,12 @@
 </head>
 <body>
 
+    <!-- 🎵 Audio Element playing songg.mp3 -->
+    <audio id="bg-audio" loop preload="auto">
+        <source src="songg.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
     <div id="canvas-container">
         <div id="start-overlay" onclick="startAnimation()">
             <button class="heart-btn">❤️</button>
@@ -83,12 +91,6 @@
         </div>
         <canvas id="heartCanvas"></canvas>
     </div>
-
-    <!-- Audio Element pointing directly to songg.mp3 -->
-    <audio id="bg-audio" loop preload="auto">
-        <source src="songg.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
 
 <script>
 const canvas = document.getElementById('heartCanvas');
@@ -100,12 +102,8 @@ const VIRTUAL_WIDTH = 800;
 const VIRTUAL_HEIGHT = 800;
 
 function resizeCanvas() {
-    const container = document.getElementById('canvas-container');
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 }
 
 window.addEventListener('resize', resizeCanvas);
@@ -249,12 +247,12 @@ function math_dist(x, y) {
 let ORDER = [];
 let main_ids = [];
 let active = [];
-let items = null;
+let currentIndex = 0;
 let RATE = 0;
 let acc = 0.0;
 let spawning = false;
 let animationStarted = false;
-let animationCompleted = false;
+let loopTimer = null;
 
 function build() {
     let cycle = phraseCycle();
@@ -355,7 +353,6 @@ function animate(p) {
 
     p.currentX = px;
     p.currentY = py;
-    p.currentFill = hx(c);
 
     let flash = 0.75 * Math.sin(Math.PI * clamp((u - 0.55) / 0.45));
     let col = mix(mix(BGC, c, e ** 1.5), FLASH, flash);
@@ -366,7 +363,6 @@ function animate(p) {
     if (u >= 1) {
         p.currentX = x;
         p.currentY = y;
-        p.currentFill = hx(c);
         p.currentMainFill = hx(c);
         return false;
     }
@@ -377,7 +373,10 @@ function startAnimation() {
     if (animationStarted) return;
     animationStarted = true;
 
-    // Explicitly play songg.mp3 on click
+    resizeCanvas();
+
+    // Play songg.mp3
+    audio.currentTime = 0;
     audio.play().catch(err => {
         console.log("Audio play error:", err);
     });
@@ -394,42 +393,37 @@ function initLoop() {
     main_ids = [];
     active = [];
     ORDER = build();
-    items = ORDER[Symbol.iterator]();
+    currentIndex = 0;
     RATE = ORDER.length / (DURATION * 1000 / TICK);
     acc = 0.0;
     spawning = true;
-    animationCompleted = false;
 
-    setTimeout(step, 200);
+    step();
 }
 
 function step() {
     if (spawning) {
         acc += RATE;
-        try {
-            while (acc >= 1) {
-                acc -= 1;
-                let nextItem = items.next();
-                if (nextItem.done) {
-                    spawning = false;
-                    break;
-                }
-                spawn(nextItem.value);
-            }
-        } catch (e) {
+        while (acc >= 1 && currentIndex < ORDER.length) {
+            acc -= 1;
+            spawn(ORDER[currentIndex]);
+            currentIndex++;
+        }
+        if (currentIndex >= ORDER.length) {
             spawning = false;
         }
     }
 
     active = active.filter(p => animate(p));
 
-    if (!spawning && active.length === 0 && !animationCompleted) {
-        animationCompleted = true;
-        // Wait 3 seconds after fully completing, then restart loop automatically
-        setTimeout(() => {
+    // When spawning is done and all fade-in animations are complete
+    if (!spawning && active.length === 0) {
+        render(); // render final frame
+        // Wait 1 second break, then restart loop
+        loopTimer = setTimeout(() => {
             initLoop();
-        }, 3000);
-        return; 
+        }, 1000);
+        return;
     }
 
     render();
@@ -448,7 +442,7 @@ function render() {
     
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.scale(scale, scale);
-    ctx.translate(-VIRTual_WIDTH / 2, -VIRTUAL_HEIGHT / 2);
+    ctx.translate(-VIRTUAL_WIDTH / 2, -VIRTUAL_HEIGHT / 2);
 
     for (let p of main_ids) {
         let x = p.currentX !== undefined ? p.currentX : p.x;
@@ -472,7 +466,6 @@ function render() {
             ctx.font = `bold ${size + 1}px ${FONT}`;
             ctx.fillStyle = p.currentHaloFill;
             ctx.fillText(text, x, y);
-            ctx.font = `bold ${size}px ${FONT}`;
         }
 
         ctx.fillStyle = p.currentMainFill || hx(p.color);
