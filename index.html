@@ -84,8 +84,8 @@
         <canvas id="heartCanvas"></canvas>
     </div>
 
-    <!-- Background Audio Element -->
-    <audio id="bg-audio" loop>
+    <!-- Audio Element pointing directly to songg.mp3 -->
+    <audio id="bg-audio" loop preload="auto">
         <source src="songg.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
@@ -113,7 +113,7 @@ resizeCanvas();
 
 const SC = 21;
 const OY = 20;
-const DURATION = 30; // 30 seconds for the appearance duration
+const DURATION = 30; // 30 seconds appearance duration
 const TICK = 16;
 const ANIM = 42;
 const LIFT = 34;
@@ -377,9 +377,9 @@ function startAnimation() {
     if (animationStarted) return;
     animationStarted = true;
 
-    // Play the song right when the heart button is clicked
-    audio.play().catch(error => {
-        console.log("Audio playback prevented or failed:", error);
+    // Explicitly play songg.mp3 on click
+    audio.play().catch(err => {
+        console.log("Audio play error:", err);
     });
 
     overlay.style.opacity = '0';
@@ -448,7 +448,7 @@ function render() {
     
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.scale(scale, scale);
-    ctx.translate(-VIRTUAL_WIDTH / 2, -VIRTUAL_HEIGHT / 2);
+    ctx.translate(-VIRTual_WIDTH / 2, -VIRTUAL_HEIGHT / 2);
 
     for (let p of main_ids) {
         let x = p.currentX !== undefined ? p.currentX : p.x;
