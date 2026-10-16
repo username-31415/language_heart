@@ -89,7 +89,6 @@
 
 <body>
 
-    <!-- Background music -->
     <audio id="bg-audio" loop preload="auto">
         <source src="songg.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
@@ -113,6 +112,20 @@ const audio = document.getElementById('bg-audio');
 const VIRTUAL_WIDTH = 800;
 const VIRTUAL_HEIGHT = 800;
 
+// Animation timing
+const DURATION = 30; 
+const TICK = 16;
+const ANIM = 42;
+const LIFT = 34;
+
+// Leave time for the final words to finish appearing
+// before the 30-second deadline.
+const SPAWN_DURATION = DURATION * 1000 - ANIM * TICK - 500;
+
+let viewportWidth = window.innerWidth;
+let viewportHeight = window.innerHeight;
+let pixelRatio = 1;
+
 function resizeCanvas() {
     const width = window.visualViewport
         ? window.visualViewport.width
@@ -122,30 +135,62 @@ function resizeCanvas() {
         ? window.visualViewport.height
         : window.innerHeight;
 
-    canvas.width = Math.max(1, Math.round(width));
-    canvas.height = Math.max(1, Math.round(height));
+    viewportWidth = width;
+    viewportHeight = height;
 
-    // Redraw immediately after resizing.
-    render();
+    // High-resolution rendering for sharper text on phones.
+    pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
+
+    canvas.width = Math.round(width * pixelRatio);
+    canvas.height = Math.round(height * pixelRatio);
+
+    // Draw in CSS pixels while rendering at device resolution.
+    ctx.setTransform(
+        pixelRatio, 0,
+        0, pixelRatio,
+        0, 0
+    );
 }
 
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener('resize', () => {
+    resizeCanvas();
+    render();
+});
 
 if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', resizeCanvas);
+    window.visualViewport.addEventListener('resize', () => {
+        resizeCanvas();
+        render();
+    });
 }
 
 const SC = 21;
 const OY = 20;
-const DURATION = 30;
-const TICK = 16;
-const ANIM = 42;
-const LIFT = 34;
 const GAP = 7;
 const SIZES = [9, 10, 11, 12];
-const FONT = "Arial";
+const FONT = "Arial, sans-serif";
 const BG = "#060208";
 const BGC = [6/255, 2/255, 8/255];
+
+// Requested languages only
+const PHRASES = [
+    "I love you",                         // English
+    "میں تم سے محبت کرتا ہوں",             // Urdu
+    "Te amo",                             // Spanish
+    "زه له تا سره مینه لرم",               // Pashto
+    "أحبك",                               // Arabic
+    "ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ",              // Punjabi
+    "Je t'aime",                          // French
+    "मैं तुमसे प्यार करता हूँ",              // Hindi
+    "Eu te amo",                          // Portuguese
+    "Я тебя люблю",                       // Russian
+    "Ik hou van jou",                     // Dutch
+    "Ich liebe dich",                     // German
+    "ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ",           // Kannada
+    "دوستت دارم",                         // Farsi
+    "मी तुझ्यावर प्रेम करतो",                // Marathi
+    "আমি তোমাকে ভালোবাসি"                  // Bengali
+];
 
 const rng = (function() {
     let seed = 11;
@@ -175,18 +220,10 @@ const rng = (function() {
     };
 })();
 
-const PHRASES = [
-    "I love you", "Seni seviyorum", "Te amo", "Je t'aime",
-    "Ich liebe dich", "Ti amo", "Eu te amo", "Я тебя люблю",
-    "사랑해", "愛してる", "我爱你", "मैं तुमसे प्यार करता हूँ",
-    "Σ' αγαπώ", "Ik hou van jou", "Jag älskar dig", "Kocham cię",
-    "ฉันรักเธอ", "Anh yêu em", "Aku cinta kamu", "Я тебе кохаю",
-];
-
 function heart(a) {
-    let x = 16 * (Math.sin(a) ** 3);
+    const x = 16 * (Math.sin(a) ** 3);
 
-    let y =
+    const y =
         13 * Math.cos(a)
         - 5 * Math.cos(2 * a)
         - 2 * Math.cos(3 * a)
@@ -196,9 +233,9 @@ function heart(a) {
 }
 
 function hx(c) {
-    let r = Math.floor(Math.max(0, Math.min(1, c[0])) * 255);
-    let g = Math.floor(Math.max(0, Math.min(1, c[1])) * 255);
-    let b = Math.floor(Math.max(0, Math.min(1, c[2])) * 255);
+    const r = Math.floor(Math.max(0, Math.min(1, c[0])) * 255);
+    const g = Math.floor(Math.max(0, Math.min(1, c[1])) * 255);
+    const b = Math.floor(Math.max(0, Math.min(1, c[2])) * 255);
 
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
@@ -241,11 +278,11 @@ function measureText(text, size) {
 }
 
 function spans(y) {
-    let xs = [];
+    const xs = [];
 
-    for (let [p1, p2] of EDGES) {
-        let [x1, y1] = p1;
-        let [x2, y2] = p2;
+    for (const [p1, p2] of EDGES) {
+        const [x1, y1] = p1;
+        const [x2, y2] = p2;
 
         if ((y1 <= y && y < y2) || (y2 <= y && y < y1)) {
             xs.push(x1 + (y - y1) * (x2 - x1) / (y2 - y1));
@@ -254,7 +291,7 @@ function spans(y) {
 
     xs.sort((a, b) => a - b);
 
-    let pairs = [];
+    const pairs = [];
 
     for (let i = 0; i < xs.length; i += 2) {
         if (i + 1 < xs.length) {
@@ -266,12 +303,12 @@ function spans(y) {
 }
 
 function intersect(A, B) {
-    let out = [];
+    const out = [];
 
-    for (let a of A) {
-        for (let b of B) {
-            let lo = Math.max(a[0], b[0]);
-            let hi = Math.min(a[1], b[1]);
+    for (const a of A) {
+        for (const b of B) {
+            const lo = Math.max(a[0], b[0]);
+            const hi = Math.min(a[1], b[1]);
 
             if (hi - lo > 14) {
                 out.push([lo, hi]);
@@ -284,7 +321,7 @@ function intersect(A, B) {
 
 function* phraseCycle() {
     while (true) {
-        let order = [...PHRASES];
+        const order = [...PHRASES];
         rng.shuffle(order);
         yield* order;
     }
@@ -302,24 +339,26 @@ let main_ids = [];
 let active = [];
 let currentIndex = 0;
 let RATE = 0;
-let acc = 0.0;
+let acc = 0;
 let spawning = false;
 let animationStarted = false;
+let loopTimer = null;
+let runId = 0;
 
 function build() {
-    let cycle = phraseCycle();
+    const cycle = phraseCycle();
 
-    let row_h = Math.max(
+    const row_h = Math.max(
         ...SIZES.map(z => getLineHeight(z))
     ) + 4;
 
-    let half = row_h / 2;
-    let placed = [];
+    const half = row_h / 2;
+    const placed = [];
 
     let y = YMAX - half;
 
     while (y > YMIN + half) {
-        let row = intersect(
+        const row = intersect(
             spans(y + half),
             spans(y - half)
         );
@@ -329,15 +368,15 @@ function build() {
             hi -= 4;
 
             let cur = lo + rng.uniform(0, 8);
-            let line = [];
+            const line = [];
 
             while (true) {
                 let fit = null;
 
                 for (let i = 0; i < 10; i++) {
-                    let text = cycle.next().value;
-                    let size = rng.choice(SIZES);
-                    let w = measureText(text, size);
+                    const text = cycle.next().value;
+                    const size = rng.choice(SIZES);
+                    const w = measureText(text, size);
 
                     if (cur + w <= hi) {
                         fit = [text, size, w];
@@ -347,7 +386,7 @@ function build() {
 
                 if (!fit) break;
 
-                let [text, size, w] = fit;
+                const [text, size, w] = fit;
 
                 line.push([cur + w / 2, text, size, w]);
                 cur += w + GAP;
@@ -356,7 +395,7 @@ function build() {
             if (line.length === 0) continue;
 
             if (line.length > 1) {
-                let left = hi -
+                const left = hi -
                     (line[line.length - 1][0] +
                      line[line.length - 1][3] / 2);
 
@@ -368,17 +407,14 @@ function build() {
             }
 
             for (let i = 0; i < line.length; i++) {
-                let [x, text, size, w] = line[i];
-
-                let edge =
-                    i === 0 || i === line.length - 1;
+                const [x, text, size] = line[i];
 
                 placed.push({
-                    x: x,
-                    y: y,
-                    text: text,
-                    size: size,
-                    edge: edge
+                    x,
+                    y,
+                    text,
+                    size,
+                    edge: i === 0 || i === line.length - 1
                 });
             }
         }
@@ -386,12 +422,12 @@ function build() {
         y -= row_h;
     }
 
-    let wine = [0.58, 0.0, 0.09];
-    let crimson = [0.90, 0.05, 0.14];
-    let blood = [0.98, 0.10, 0.16];
+    const wine = [0.58, 0.0, 0.09];
+    const crimson = [0.90, 0.05, 0.14];
+    const blood = [0.98, 0.10, 0.16];
 
-    for (let p of placed) {
-        let rad = Math.min(1.0, math_dist(p.x, p.y));
+    for (const p of placed) {
+        const rad = Math.min(1.0, math_dist(p.x, p.y));
 
         let base = mix(wine, crimson, 0.25 + 0.75 * rad);
 
@@ -410,8 +446,8 @@ function build() {
         p.rad = rad;
     }
 
-    let edges = placed.filter(p => p.edge);
-    let inner = placed.filter(p => !p.edge);
+    const edges = placed.filter(p => p.edge);
+    const inner = placed.filter(p => !p.edge);
 
     edges.sort((a, b) =>
         (Math.atan2(a.x, a.y - CY) % (2 * Math.PI)) -
@@ -429,7 +465,7 @@ function build() {
 const FLASH = [1.0, 0.78, 0.78];
 
 function clamp(v) {
-    return Math.max(0.0, Math.min(1.0, v));
+    return Math.max(0, Math.min(1, v));
 }
 
 function spawn(p) {
@@ -443,35 +479,26 @@ function spawn(p) {
 function animate(p) {
     p.f += 1;
 
-    let u = clamp(p.f / ANIM);
-    let e = 1 - (1 - u) ** 3;
+    const u = clamp(p.f / ANIM);
+    const e = 1 - (1 - u) ** 3;
 
-    let c = p.color;
-    let x = p.x;
-    let y = -p.y;
+    const c = p.color;
+    const x = p.x;
+    const y = -p.y;
 
-    let hover = (1 - e) * LIFT;
+    const hover = (1 - e) * LIFT;
 
-    let px = x + p.dx * (1 - e);
-    let py = y - hover;
+    p.currentX = x + p.dx * (1 - e);
+    p.currentY = y - hover;
 
-    p.currentX = px;
-    p.currentY = py;
-
-    let flash = 0.75 *
+    const flash = 0.75 *
         Math.sin(Math.PI * clamp((u - 0.55) / 0.45));
 
-    let col = mix(mix(BGC, c, e ** 1.5), FLASH, flash);
+    const col = mix(mix(BGC, c, e ** 1.5), FLASH, flash);
 
     p.currentMainFill = hx(col);
-
-    p.currentShadowFill = hx(
-        mix(BGC, dim(c, 0.30), e)
-    );
-
-    p.currentHaloFill = hx(
-        mix(BGC, dim(c, 0.20), e * e)
-    );
+    p.currentShadowFill = hx(mix(BGC, dim(c, 0.30), e));
+    p.currentHaloFill = hx(mix(BGC, dim(c, 0.20), e * e));
 
     if (u >= 1) {
         p.currentX = x;
@@ -487,10 +514,8 @@ function startAnimation() {
     if (animationStarted) return;
 
     animationStarted = true;
-
     resizeCanvas();
 
-    // Play songg.mp3
     audio.currentTime = 0;
 
     audio.play().catch(err => {
@@ -507,28 +532,33 @@ function startAnimation() {
 }
 
 function initLoop() {
+    if (loopTimer !== null) {
+        clearTimeout(loopTimer);
+        loopTimer = null;
+    }
+
+    runId++;
+
     main_ids = [];
     active = [];
-
     ORDER = build();
 
     currentIndex = 0;
-
-    RATE = ORDER.length / (DURATION * 1000 / TICK);
-
-    acc = 0.0;
+    RATE = ORDER.length / (SPAWN_DURATION / TICK);
+    acc = 0;
     spawning = true;
 
-    step();
+    step(runId);
 }
 
-function step() {
+function step(id) {
+    if (id !== runId) return;
+
     if (spawning) {
         acc += RATE;
 
         while (acc >= 1 && currentIndex < ORDER.length) {
             acc -= 1;
-
             spawn(ORDER[currentIndex]);
             currentIndex++;
         }
@@ -540,54 +570,54 @@ function step() {
 
     active = active.filter(p => animate(p));
 
-    if (!spawning && active.length === 0) {
-        render();
+    render();
 
-        setTimeout(() => {
-            initLoop();
+    if (!spawning && active.length === 0) {
+        // Wait briefly, then repeat the same animation.
+        loopTimer = setTimeout(() => {
+            if (id === runId) {
+                initLoop();
+            }
         }, 1000);
 
         return;
     }
 
-    render();
-
-    setTimeout(step, TICK);
+    loopTimer = setTimeout(() => step(id), TICK);
 }
 
 function render() {
+    // Clear using CSS pixel dimensions; the context itself
+    // is scaled to the screen's device pixel ratio.
     ctx.fillStyle = BG;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, viewportWidth, viewportHeight);
 
     ctx.save();
 
-    // Calculate a scale that fits the screen.
-    const scaleX = canvas.width / VIRTUAL_WIDTH;
-    const scaleY = canvas.height / VIRTUAL_HEIGHT;
+    // Fit the heart to the screen and center it.
+    const scaleX = viewportWidth / VIRTUAL_WIDTH;
+    const scaleY = viewportHeight / VIRTUAL_HEIGHT;
     const scale = Math.min(scaleX, scaleY);
 
-    // Center the drawing in the visible viewport.
-    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.translate(viewportWidth / 2, viewportHeight / 2);
     ctx.scale(scale, scale);
 
-    // Correct the heart's actual vertical center.
-    // The original heart is not vertically centered
-    // around the drawing origin after its Y coordinates
-    // are flipped in animate().
+    // Center the heart's actual vertical bounds.
     ctx.translate(0, CY);
 
-    for (let p of main_ids) {
-        let x = p.currentX !== undefined
+    for (const p of main_ids) {
+        const x = p.currentX !== undefined
             ? p.currentX
             : p.x;
 
-        let y = p.currentY !== undefined
+        const y = p.currentY !== undefined
             ? p.currentY
             : (-p.y);
 
-        let size = p.size;
-        let text = p.text;
+        const size = p.size;
+        const text = p.text;
 
+        // Explicit text settings for consistent, sharp rendering.
         ctx.font = `bold ${size}px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -608,7 +638,7 @@ function render() {
 
         ctx.fillStyle = p.currentMainFill || hx(p.color);
 
-        let drawY = (p.f < ANIM)
+        const drawY = p.f < ANIM
             ? y - LIFT
             : y;
 
@@ -618,9 +648,10 @@ function render() {
     ctx.restore();
 }
 
-// Initial setup.
+// Initial canvas setup.
 resizeCanvas();
 render();
+
 </script>
 
 </body>
